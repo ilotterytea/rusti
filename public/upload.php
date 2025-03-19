@@ -65,19 +65,24 @@ if (!move_uploaded_file($file['tmp_name'], "{$upload_directory}/{$file_id}.{$fil
 
 $url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]";
 
-http_response_code(201);
-header('Content-Type: application/json');
-echo json_encode([
-    'status_code' => 201,
-    'message' => null,
-    'data' => [
-        'id' => $file_id,
-        'mime' => $file_mime,
-        'extension' => $file_extension,
-        'size' => $file_size,
-        'urls' => [
-            'download_url' => "{$url}/{$file_id}.{$file_extension}"
-        ]
-    ]
-], JSON_UNESCAPED_SLASHES);
+$download_url = "{$url}/{$file_id}.{$file_extension}";
 
+if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
+    http_response_code(201);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'status_code' => 201,
+        'message' => null,
+        'data' => [
+            'id' => $file_id,
+            'mime' => $file_mime,
+            'extension' => $file_extension,
+            'size' => $file_size,
+            'urls' => [
+                'download_url' => $download_url
+            ]
+        ]
+    ], JSON_UNESCAPED_SLASHES);
+} else {
+    header("Location: {$download_url}");
+}
