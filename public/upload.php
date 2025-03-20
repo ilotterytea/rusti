@@ -50,7 +50,6 @@ do {
     for ($i = 0; $i < $file_length; $i++) {
         $file_id .= $file_chars[random_int(0, count($file_chars) - 1)];
     }
-    error_log("asd");
 } while (file_exists("{$upload_directory}/{$file_id}.{$file_extension}"));
 
 if (empty($file_id)) {
@@ -67,21 +66,41 @@ $url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]";
 
 $download_url = "{$url}/{$file_id}.{$file_extension}";
 
+$data = [
+    'id' => $file_id,
+    'mime' => $file_mime,
+    'extension' => $file_extension,
+    'size' => $file_size,
+    'urls' => [
+        'download_url' => $download_url
+    ]
+];
+
+// saving locally saved file
+$uploaded_files_cookies = json_decode($_COOKIE['UPLOADED_FILES'] ?? '[]') ?? [];
+
+if (!is_array($uploaded_files_cookies)) {
+    $uploaded_files_cookies = [];
+}
+
+array_unshift($uploaded_files_cookies, $data);
+
+$cookie_body = json_encode($uploaded_files_cookies, JSON_UNESCAPED_SLASHES);
+
+while (strlen($cookie_body) >= 4096) {
+    array_pop($uploaded_files_cookies);
+    $cookie_body = json_encode($uploaded_files_cookies, JSON_UNESCAPED_SLASHES);
+}
+
+setcookie('UPLOADED_FILES', $cookie_body, time() + 60 * 60 * 24 * 365, '/');
+
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
     http_response_code(201);
-    header('Content-Type: application/json');
+    header(header: 'Content-Type: application/json');
     echo json_encode([
         'status_code' => 201,
         'message' => null,
-        'data' => [
-            'id' => $file_id,
-            'mime' => $file_mime,
-            'extension' => $file_extension,
-            'size' => $file_size,
-            'urls' => [
-                'download_url' => $download_url
-            ]
-        ]
+        'data' => $data
     ], JSON_UNESCAPED_SLASHES);
 } else {
     header("Location: {$download_url}");
