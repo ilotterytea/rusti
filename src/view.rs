@@ -1,8 +1,15 @@
 use std::path::Path;
 
 use actix_web::{HttpResponse, Responder, web};
+use diesel::{QueryDsl, RunQueryDsl};
 use handlebars::Handlebars;
 use serde_json::json;
+
+use crate::{
+    config::{DEFAULT_GALLERY_PAGE, DEFAULT_GALLERY_SIZE},
+    database::establish_connection,
+    gallery::{GalleryQuery, get_images},
+};
 
 const STATIC_FILES: include_dir::Dir = include_dir::include_dir!("static");
 const TEMPLATE_FILES: include_dir::Dir = include_dir::include_dir!("templates");
@@ -47,6 +54,43 @@ pub fn register_handlebars_templates(hb: &mut Handlebars<'_>) {
 
 pub async fn get_index_view(hb: web::Data<Handlebars<'_>>) -> impl Responder {
     let body = hb.render("index.hbs", &json!({})).unwrap();
+
+    web::Html::new(body)
+}
+
+pub async fn get_gallery_view(
+    hb: web::Data<Handlebars<'_>>,
+    query: web::Query<GalleryQuery>,
+) -> impl Responder {
+    let mut page = query.page.unwrap_or(DEFAULT_GALLERY_PAGE);
+    let size = query.size.unwrap_or(DEFAULT_GALLERY_SIZE);
+
+    let conn = &mut establish_connection();
+    let mut max_pages: i64 = crate::database::schema::images::dsl::images
+        .count()
+        .get_result(conn)
+        .expect("Error counting images");
+
+    max_pages /= size;
+    max_pages += 1;
+
+    if page > max_pages {
+        page = max_pages;
+    }
+
+    let images = get_images(page, size);
+
+    let body = hb
+        .render(
+            "gallery.hbs",
+            &json!({
+                "images": images,
+                "page": page,
+                "max_pages": max_pages,
+                "size": size
+            }),
+        )
+        .unwrap();
 
     web::Html::new(body)
 }

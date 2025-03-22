@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>gallery - rusti</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="wrapper">
+            <div class="brand">
+                <img src="static/img/favicon.png" alt="">
+                <div class="brand-description">
+                    <h1>rusti</h1>
+                    <p>a tiny image service</p>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="gallery-title">
+                    <h2>Page {{page}}/{{max_pages}}</h2>
+                </div>
+
+                <div class="gallery">
+                    {{#each images}}
+                    <a href="#" fileid="{{id}}" class="gallery-image" filename="{{filename}}">
+                    </a>
+                    {{/each}}
+                </div>
+
+                <div class="pagination">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    const url = `${window.location.protocol}//${window.location.host}`;
+
+    // setup images
+    const gallery_images = document.querySelectorAll(".gallery-image");
+
+    for (const gallery_image of gallery_images) {
+        gallery_image.setAttribute("href", `${url}/${gallery_image.getAttribute("fileid")}`);
+
+        const img = document.createElement("img");
+        img.src = `${url}/api/image/retrieve/${gallery_image.getAttribute("fileid")}`;
+        img.alt = gallery_image.getAttribute("filename");
+        img.title = img.alt;
+
+        gallery_image.appendChild(img);
+    }
+
+    // setup pagination
+    const pagination = document.querySelector(".pagination");
+    const current_page = {{ page }};
+    const max_pages = {{ max_pages }};
+
+    if (current_page > 1) {
+        const link = document.createElement("a");
+        link.setAttribute("href", `${url}/gallery?page=${current_page - 1}`);
+        link.setAttribute("class", "pagination-link");
+        link.innerHTML = "[ prev ]";
+        pagination.appendChild(link);
+    }
+
+    if (current_page < max_pages) {
+        const link = document.createElement("a");
+        link.setAttribute("href", `${url}/gallery?page=${current_page + 1}`);
+        link.setAttribute("class", "pagination-link");
+        link.innerHTML = "[ next ]";
+        pagination.appendChild(link);
+    }
+</script>
+
+</html>

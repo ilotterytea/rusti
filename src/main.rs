@@ -4,6 +4,7 @@ use serde::Serialize;
 
 mod config;
 mod database;
+mod gallery;
 mod image;
 mod random;
 mod view;
@@ -31,6 +32,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(hb.clone())
             // frontend
             .route("/", web::get().to(view::get_index_view))
+            .route("/gallery", web::get().to(view::get_gallery_view))
             .route(
                 "/static/{filename:.*}",
                 web::get().to(view::handle_static_file),
@@ -39,6 +41,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api").service(
                     web::scope("/image")
+                        .route("/gallery", web::get().to(gallery::get_gallery))
             .route("/upload", web::post().to(image::handle_image_upload))
                         .route("/upload/{id}", web::put().to(image::handle_image_update))
                         .route(
