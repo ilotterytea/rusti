@@ -38,6 +38,7 @@ if (file_exists($configpath)) {
     <title>tinyi</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 </head>
 
 <body>
@@ -95,6 +96,14 @@ if (file_exists($configpath)) {
                 <?php endif; ?>
             </main>
             <footer>
+                <?php
+                $mirror = explode(';', $config['instance']['mirror'] ?? '');
+                if (count($mirror) > 1): ?>
+                    <p style="margin-bottom: 12px">You're looking in the mirror for <?= $mirror[1] ?>. <a
+                            href="<?= $mirror[0] ?>">[ Check out the
+                            origin website
+                            ]</a></p>
+                <?php endif; ?>
                 <p>a part of</p>
                 <a href="https://alright.party" target="_blank"><img src="/static/img/alrightparty.png"
                         alt="alright.party"></a>
