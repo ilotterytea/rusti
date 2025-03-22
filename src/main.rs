@@ -36,10 +36,21 @@ async fn main() -> std::io::Result<()> {
                 web::get().to(view::handle_static_file),
             )
             // image management
+            .service(
+                web::scope("/api").service(
+                    web::scope("/image")
             .route("/upload", web::post().to(image::handle_image_upload))
-            .route("/{id}", web::get().to(image::handle_image_retrieve))
-            .route("/{id}", web::delete().to(image::handle_image_deletion))
-            .route("/{id}", web::put().to(image::handle_image_update))
+                        .route("/upload/{id}", web::put().to(image::handle_image_update))
+                        .route(
+                            "/retrieve/{id}",
+                            web::get().to(image::handle_image_retrieve),
+                        )
+                        .route(
+                            "/delete/{id}",
+                            web::delete().to(image::handle_image_deletion),
+                        ),
+                ),
+            )
     })
     .bind((host, port))?
     .run()
