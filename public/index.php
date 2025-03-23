@@ -31,13 +31,15 @@ if (file_exists($configpath)) {
 }
 
 [$file_overall_size, $file_count] = size($upload_directory);
+
+$instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
 ?>
 <html>
 
 <head>
-    <title>tinyi</title>
+    <title><?= $instance_name ?></title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 </head>
 
@@ -46,7 +48,8 @@ if (file_exists($configpath)) {
         <div class="wrapper">
             <main>
                 <section class="brand">
-                    <img src="/static/img/brand.webp" alt="tinyi">
+                    <img src="/static/img/brand.png" alt="<?= $instance_name ?>">
+                    <h1><?= $instance_name ?></h1>
                 </section>
 
                 <section class="box file-upload">
