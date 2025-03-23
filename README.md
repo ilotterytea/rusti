@@ -1,4 +1,4 @@
-# tinyi
+# ![](/icon.png) tinyi
 
 A tiny file hosting service.
 
