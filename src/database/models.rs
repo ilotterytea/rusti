@@ -15,6 +15,11 @@ pub struct Image {
     pub secret_key: String,
     pub uploaded_at: NaiveDateTime,
     pub modified_at: NaiveDateTime,
+    pub expires_at: Option<NaiveDateTime>,
+    pub size: i32,
+    pub visibility: i32,
+    pub tags: Option<String>,
+    pub password: Option<String>,
 }
 
 #[derive(Insertable)]
@@ -24,5 +29,10 @@ pub struct NewImage<'a> {
     pub filename: &'a str,
     pub extension: &'a str,
     pub mime: &'a str,
-    pub secret_key: String,
+    pub secret_key: &'a str,
+    pub expires_at: Option<NaiveDateTime>,
+    pub size: i32,
+    pub visibility: i32,
+    pub tags: Option<String>,
+    pub password: Option<String>,
 }

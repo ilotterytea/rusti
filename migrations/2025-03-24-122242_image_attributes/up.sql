@@ -1,0 +1,6 @@
+-- Your SQL goes here
+ALTER TABLE "images" ADD COLUMN "expires_at" TIMESTAMP;
+ALTER TABLE "images" ADD COLUMN "size" INTEGER NOT NULL;
+ALTER TABLE "images" ADD COLUMN "visibility" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "images" ADD COLUMN "tags" TEXT;
+ALTER TABLE "images" ADD COLUMN "password" TEXT;

@@ -1,8 +1,8 @@
 use std::fs::{copy, create_dir_all, exists};
 
-use actix_multipart::form::{MultipartForm, tempfile::TempFile};
+use actix_multipart::form::{MultipartForm, tempfile::TempFile, text::Text};
 use actix_web::{HttpResponse, web};
-use chrono::Utc;
+use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 use serde::Deserialize;
 
@@ -20,6 +20,10 @@ use crate::{
 #[derive(MultipartForm)]
 pub struct ImageUpload {
     pub file: TempFile,
+    pub expires: Option<Text<i32>>,
+    pub visibility: Option<Text<i32>>,
+    pub tags: Option<Text<String>>,
+    pub password: Option<Text<String>>,
 }
 
 #[derive(Deserialize)]
@@ -81,18 +85,60 @@ pub async fn handle_image_upload(MultipartForm(form): MultipartForm<ImageUpload>
 
     // saving image data
     let conn = &mut establish_connection();
+    let mut visibility = *form.visibility.unwrap_or(Text(1));
 
-    let image = diesel::insert_into(im::images)
+    if !(0..=1).contains(&visibility) {
+        visibility = 1;
+    }
+
+    let (mut tags, mut password) = (None, None);
+
+    if let Some(t) = form.tags {
+        tags = Some(t.clone());
+    }
+
+    if let Some(p) = form.password {
+        password = Some(p.clone());
+    }
+
+    let mut image = diesel::insert_into(im::images)
         .values(NewImage {
             id: &id,
             filename: &filename,
             extension,
             mime: mime.essence_str(),
-            secret_key: generate_random_sequence(32, random::CHARACTER_POOL),
+            secret_key: &generate_random_sequence(32, random::CHARACTER_POOL),
+            expires_at: None,
+            size: form.file.size as i32,
+            visibility,
+            tags,
+            password,
         })
         .returning(Image::as_returning())
         .get_result(conn)
         .expect("Error saving new image");
+
+    if let Some(expires_at) = form.expires {
+        if (1..=6).contains(&*expires_at) {
+            let mut expires_at_timestamp: NaiveDateTime = image.uploaded_at.clone();
+
+            match *expires_at {
+                2 => expires_at_timestamp += Duration::hours(1),
+                3 => expires_at_timestamp += Duration::hours(3),
+                4 => expires_at_timestamp += Duration::hours(12),
+                5 => expires_at_timestamp += Duration::days(1),
+                6 => expires_at_timestamp += Duration::weeks(1),
+                _ => {}
+            }
+
+            image.expires_at = Some(expires_at_timestamp);
+
+            diesel::update(im::images.find(&image.id))
+                .set(im::expires_at.eq(expires_at_timestamp))
+                .execute(conn)
+                .expect("Error updating an image");
+        }
+    }
 
     HttpResponse::Created().json(Response {
         status_code: 201,
