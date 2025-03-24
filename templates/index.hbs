@@ -44,6 +44,13 @@
                                     <option value="7d">1 week</option>
                                 </select>
                             </div>
+                            <div class="form-toggle">
+                                <p>Image Visibility:</p>
+                                <select id="visibility">
+                                    <option value="0">Unlisted</option>
+                                    <option value="1">Public</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -58,6 +65,8 @@
     const url = `${window.location.protocol}//${window.location.host}`;
 
     const fileExpires = document.getElementById("expires-in");
+    const fileVisibility = document.getElementById("visibility");
+
     const fileInput = document.getElementById("file");
     const dropZone = document.getElementById("drop-zone");
     const uploadButton = document.getElementById("upload-button");
@@ -80,8 +89,9 @@
         const form = new FormData();
         form.append("file", file);
         form.append("expires_in", fileExpires.value);
+        form.append("visibility", fileVisibility.value);
 
-        fetch(url + "/upload", {
+        fetch(url + "/api/image/upload", {
             method: "POST",
             body: form
         })
