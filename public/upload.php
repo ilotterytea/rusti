@@ -14,6 +14,7 @@ if (!isset($_FILES['file'])) {
 $upload_directory = './static/uploads';
 
 $configpath = $_SERVER['DOCUMENT_ROOT'] . '/../tinyi.ini';
+$config = [];
 
 if (file_exists($configpath)) {
     $config = parse_ini_file($configpath, true);
@@ -42,13 +43,16 @@ if (!$file_extension) {
 }
 
 $file_id = "";
-$file_length = 5;
-$file_chars = str_split("ABCDEFabcdef0123456789");
+$file_length = intval($config['files']['file_id_length'] ?? '5');
+$file_chars = str_split($config['files']['file_id_char_pool'] ?? 'ABCabc123');
 
 do {
     $file_id = "";
     for ($i = 0; $i < $file_length; $i++) {
         $file_id .= $file_chars[random_int(0, count($file_chars) - 1)];
+    }
+    if (isset($config['files']['upload_prefix'])) {
+        $file_id = $config['files']['upload_prefix'] . $file_id;
     }
 } while (file_exists("{$upload_directory}/{$file_id}.{$file_extension}"));
 
