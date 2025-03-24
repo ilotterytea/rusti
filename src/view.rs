@@ -53,7 +53,16 @@ pub fn register_handlebars_templates(hb: &mut Handlebars<'_>) {
 }
 
 pub async fn get_index_view(hb: web::Data<Handlebars<'_>>) -> impl Responder {
-    let body = hb.render("index.hbs", &json!({})).unwrap();
+    let body = hb
+        .render(
+            "index.hbs",
+            &json!({
+                "rusti_name": "rusti",
+                "rusti_description": "a tiny, anonymous image service",
+                "rusti_version": env!("CARGO_PKG_VERSION")
+            }),
+        )
+        .unwrap();
 
     web::Html::new(body)
 }
@@ -87,7 +96,12 @@ pub async fn get_gallery_view(
                 "images": images,
                 "page": page,
                 "max_pages": max_pages,
-                "size": size
+                "size": size,
+
+                "page_title": format!("gallery (page {}/{})", page, max_pages),
+                "rusti_name": "rusti",
+                "rusti_description": "a tiny, anonymous image service",
+                "rusti_version": env!("CARGO_PKG_VERSION")
             }),
         )
         .unwrap();

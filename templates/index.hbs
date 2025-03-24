@@ -1,21 +1,12 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-    <title>rusti</title>
-    <link rel="stylesheet" href="static/css/style.css">
-</head>
+{{> partial_head.hbs }}
 
 <body>
     <div class="container">
         <div class="wrapper">
-            <div class="brand">
-                <img src="static/img/favicon.png" alt="">
-                <div class="brand-description">
-                    <h1>rusti</h1>
-                    <p>a tiny image service</p>
-                </div>
-            </div>
+            {{> partial_header.hbs }}
 
             <div class="content">
                 <h2>New image</h2>
@@ -57,6 +48,8 @@
                     <button class="upload-button" id="upload-button">Upload</button>
                 </div>
             </div>
+
+            {{> partial_footer.hbs }}
         </div>
     </div>
 </body>

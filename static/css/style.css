@@ -3,6 +3,10 @@
    margin: 0;
 }
 
+p a {
+   color: inherit;
+}
+
 .container {
    width: 100%;
    min-height: 100vh;
@@ -20,7 +24,7 @@
 
 /** 
 -----------
-   BRAND
+   HEADER
 -----------
 */
 
@@ -50,6 +54,35 @@
 
 .brand-description p {
    color: gray;
+}
+
+/** 
+------------
+   FOOTER
+------------
+*/
+
+.footer {
+   display: flex;
+   align-items: center;
+   flex-direction: row;
+   width: 100%;
+
+   padding: 4px;
+   font-size: 12px;
+
+   border-top: 1px solid lightgray;
+}
+
+.footer p {
+   color: lightgray;
+}
+
+.copyright {
+   flex-grow: 1;
+   display: flex;
+   justify-content: flex-end;
+   align-items: center;
 }
 
 /** 
