@@ -51,6 +51,7 @@ pub fn get_images(mut page: i64, mut size: i64) -> Vec<Image> {
     let conn = &mut establish_connection();
 
     let images = im::images
+        .filter(im::visibility.eq(1))
         .order_by(im::uploaded_at.desc())
         .limit(size)
         .offset(size * page)
