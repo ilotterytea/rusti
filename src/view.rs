@@ -6,7 +6,7 @@ use handlebars::Handlebars;
 use serde_json::json;
 
 use crate::{
-    config::{DEFAULT_GALLERY_PAGE, DEFAULT_GALLERY_SIZE},
+    config::Configuration,
     database::establish_connection,
     gallery::{GalleryQuery, get_images},
 };
@@ -52,14 +52,18 @@ pub fn register_handlebars_templates(hb: &mut Handlebars<'_>) {
     }
 }
 
-pub async fn get_index_view(hb: web::Data<Handlebars<'_>>) -> impl Responder {
+pub async fn get_index_view(
+    config: web::Data<Configuration>,
+    hb: web::Data<Handlebars<'_>>,
+) -> impl Responder {
     let body = hb
         .render(
             "index.hbs",
             &json!({
                 "is_home": true,
-                "rusti_name": "rusti",
-                "rusti_description": "a tiny, anonymous image service",
+                "allow_gallery": config.allow_gallery,
+                "rusti_name": &config.instance_name,
+                "rusti_description": &config.instance_description,
                 "rusti_version": env!("CARGO_PKG_VERSION")
             }),
         )
@@ -70,10 +74,17 @@ pub async fn get_index_view(hb: web::Data<Handlebars<'_>>) -> impl Responder {
 
 pub async fn get_gallery_view(
     hb: web::Data<Handlebars<'_>>,
+    config: web::Data<Configuration>,
     query: web::Query<GalleryQuery>,
-) -> impl Responder {
-    let mut page = query.page.unwrap_or(DEFAULT_GALLERY_PAGE);
-    let size = query.size.unwrap_or(DEFAULT_GALLERY_SIZE);
+) -> HttpResponse {
+    if !config.allow_gallery {
+        return HttpResponse::TemporaryRedirect()
+            .insert_header(("Location", "/"))
+            .body("");
+    }
+
+    let mut page = query.page.unwrap_or(config.default_gallery_page);
+    let size = query.size.unwrap_or(config.default_gallery_size);
 
     let conn = &mut establish_connection();
     let mut max_pages: i64 = crate::database::schema::images::dsl::images
@@ -88,7 +99,7 @@ pub async fn get_gallery_view(
         page = max_pages;
     }
 
-    let images = get_images(page, size);
+    let images = get_images(&config, page, size);
 
     let body = hb
         .render(
@@ -100,13 +111,16 @@ pub async fn get_gallery_view(
                 "size": size,
 
                 "is_gallery": true,
+                "allow_gallery": config.allow_gallery,
                 "page_title": format!("gallery (page {}/{})", page, max_pages),
-                "rusti_name": "rusti",
-                "rusti_description": "a tiny, anonymous image service",
+                "rusti_name": &config.instance_name,
+                "rusti_description": &config.instance_description,
                 "rusti_version": env!("CARGO_PKG_VERSION")
             }),
         )
         .unwrap();
 
-    web::Html::new(body)
+    HttpResponse::Ok()
+        .insert_header(("Content-Type", "text/html"))
+        .body(body)
 }

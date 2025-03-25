@@ -1,8 +1,7 @@
 use rand::{Rng, rng};
 
-pub const CHARACTER_POOL: &[u8] = b"ABCDEF123456";
-
-pub fn generate_random_sequence(size: u8, char_pool: &[u8]) -> String {
+pub fn generate_random_sequence(size: usize, char_pool: &String) -> String {
+    let char_pool = char_pool.as_bytes();
     let mut rng = rng();
     let mut output = String::new();
 

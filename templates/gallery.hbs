@@ -9,6 +9,7 @@
             {{> partial_header.hbs }}
 
             <div class="content">
+                {{#if images}}
                 <div class="gallery-title">
                     <h2>Page {{page}}/{{max_pages}}</h2>
                 </div>
@@ -22,6 +23,9 @@
 
                 <div class="pagination">
                 </div>
+                {{else}}
+                <p style="color: red;font-weight:bold;">No images.</p>
+                {{/if}}
             </div>
 
             {{> partial_footer.hbs }}
@@ -29,6 +33,7 @@
     </div>
 </body>
 
+{{#if images}}
 <script>
     const url = `${window.location.protocol}//${window.location.host}`;
 
@@ -67,5 +72,6 @@
         pagination.appendChild(link);
     }
 </script>
+{{/if}}
 
 </html>

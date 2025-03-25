@@ -2,3 +2,4 @@
 /userdata
 *.db
 *.env
+rusti.toml

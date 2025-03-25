@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Response,
-    config::{DEFAULT_GALLERY_PAGE, DEFAULT_GALLERY_SIZE, DEFAULT_GALLERY_SIZE_RANGE},
+    config::Configuration,
     database::{establish_connection, models::Image, schema::images::dsl as im},
 };
 
@@ -21,11 +21,22 @@ struct GalleryResponse {
     pub images: Vec<Image>,
 }
 
-pub async fn get_gallery(query: web::Query<GalleryQuery>) -> HttpResponse {
-    let page = query.page.unwrap_or(DEFAULT_GALLERY_PAGE);
-    let size = query.size.unwrap_or(DEFAULT_GALLERY_SIZE);
+pub async fn get_gallery(
+    config: web::Data<Configuration>,
+    query: web::Query<GalleryQuery>,
+) -> HttpResponse {
+    if !config.allow_gallery {
+        return HttpResponse::Forbidden().json(Response {
+            status_code: 403,
+            message: Some("The gallery is not allowed in this instance.".into()),
+            data: None::<GalleryResponse>,
+        });
+    }
 
-    let images = get_images(page, size);
+    let page = query.page.unwrap_or(config.default_gallery_page);
+    let size = query.size.unwrap_or(config.default_gallery_size);
+
+    let images = get_images(&config, page, size);
 
     HttpResponse::Ok().json(Response {
         status_code: 200,
@@ -34,11 +45,15 @@ pub async fn get_gallery(query: web::Query<GalleryQuery>) -> HttpResponse {
     })
 }
 
-pub fn get_images(mut page: i64, mut size: i64) -> Vec<Image> {
-    if !DEFAULT_GALLERY_SIZE_RANGE.contains(&size) {
+pub fn get_images(config: &Configuration, mut page: i64, mut size: i64) -> Vec<Image> {
+    if !config.allow_gallery {
+        return Vec::new();
+    }
+
+    if !config.default_gallery_size_range.contains(&size) {
         size = size.clamp(
-            DEFAULT_GALLERY_SIZE_RANGE.start,
-            DEFAULT_GALLERY_SIZE_RANGE.end,
+            config.default_gallery_size_range.start,
+            config.default_gallery_size_range.end,
         );
     }
 

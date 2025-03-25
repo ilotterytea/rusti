@@ -8,13 +8,13 @@ use serde::Deserialize;
 
 use crate::{
     Response,
-    config::DEFAULT_MIME_TYPES,
+    config::Configuration,
     database::{
         establish_connection,
         models::{Image, NewImage},
         schema::images::dsl as im,
     },
-    random::{self, generate_random_sequence},
+    random::generate_random_sequence,
 };
 
 #[derive(MultipartForm)]
@@ -31,7 +31,10 @@ pub struct ImageDeletionQuery {
     pub key: String,
 }
 
-pub async fn handle_image_upload(MultipartForm(form): MultipartForm<ImageUpload>) -> HttpResponse {
+pub async fn handle_image_upload(
+    config: web::Data<Configuration>,
+    MultipartForm(form): MultipartForm<ImageUpload>,
+) -> HttpResponse {
     if !exists("userdata").unwrap_or(false) && create_dir_all("userdata").is_err() {
         return HttpResponse::InternalServerError().json(Response {
             status_code: 500,
@@ -51,9 +54,10 @@ pub async fn handle_image_upload(MultipartForm(form): MultipartForm<ImageUpload>
         }
     };
 
-    let (_, extension) = match DEFAULT_MIME_TYPES
+    let (_, extension) = match config
+        .allowed_mime_types
         .iter()
-        .find(|(x, _)| (*x).eq(mime.essence_str()))
+        .find(|(x, _)| x.eq(mime.essence_str()))
     {
         Some(m) => m,
         None => {
@@ -65,7 +69,7 @@ pub async fn handle_image_upload(MultipartForm(form): MultipartForm<ImageUpload>
         }
     };
 
-    let id = generate_random_sequence(6, random::CHARACTER_POOL);
+    let id = generate_random_sequence(config.image_id_length, &config.character_pool);
 
     let old_path = form.file.file.path();
     let new_path = format!("userdata/{}.{}", id, extension);
@@ -107,7 +111,10 @@ pub async fn handle_image_upload(MultipartForm(form): MultipartForm<ImageUpload>
             filename: &filename,
             extension,
             mime: mime.essence_str(),
-            secret_key: &generate_random_sequence(32, random::CHARACTER_POOL),
+            secret_key: &generate_random_sequence(
+                config.image_secret_key_length,
+                &config.character_pool,
+            ),
             expires_at: None,
             size: form.file.size as i32,
             visibility,
@@ -234,6 +241,7 @@ pub async fn handle_image_deletion(
 
 pub async fn handle_image_update(
     id: web::Path<String>,
+    config: web::Data<Configuration>,
     query: web::Query<ImageDeletionQuery>,
     MultipartForm(form): MultipartForm<ImageUpload>,
 ) -> HttpResponse {
@@ -269,9 +277,10 @@ pub async fn handle_image_update(
         }
     };
 
-    let (_, extension) = match DEFAULT_MIME_TYPES
+    let (_, extension) = match config
+        .allowed_mime_types
         .iter()
-        .find(|(x, _)| (*x).eq(mime.essence_str()))
+        .find(|(x, _)| x.eq(mime.essence_str()))
     {
         Some(m) => m,
         None => {

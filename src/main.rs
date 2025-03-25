@@ -1,4 +1,5 @@
 use actix_web::{App, HttpServer, web};
+use config::Configuration;
 use handlebars::Handlebars;
 use serde::Serialize;
 
@@ -18,6 +19,18 @@ pub struct Response<T> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let config: Configuration = match std::fs::read_to_string("rusti.toml") {
+        Ok(contents) => {
+            toml::from_str::<Configuration>(&contents).expect("Error parsing rusti.toml")
+        }
+        Err(_) => {
+            println!("No rusti.toml configuration file. Loading default values...");
+            Configuration::default()
+        }
+    };
+
+    let config = web::Data::new(config);
+
     let (host, port) = ("0.0.0.0", 18080);
 
     println!("Running an image web service on {}:{}!", host, port);
@@ -29,6 +42,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .app_data(config.clone())
             .app_data(hb.clone())
             // frontend
             .route("/", web::get().to(view::get_index_view))
