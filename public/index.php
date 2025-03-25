@@ -44,6 +44,7 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
 </head>
 
 <body>
+    <noscript>Enabled limited functionality mode</noscript>
     <div class="container">
         <div class="wrapper">
             <main>
@@ -54,13 +55,28 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
 
                 <section class="box file-upload">
                     <div class="tab">
-                        <p>File Upload</p>
+                        <div class="grow">
+                            <p>File Upload</p>
+                        </div>
+                        <button onclick="resetUpload()" id="form-reset-button" style="display: none;"><img
+                                src="/static/img/icons/cancel.png" alt="X"></button>
                     </div>
                     <div class="content">
-                        <form action="/upload.php" method="post" enctype="multipart/form-data">
-                            <input type="file" name="file" id="file" required>
-                            <button type="submit">Upload</button>
+                        <form action="/upload.php" method="post" enctype="multipart/form-data" id="form-upload">
+                            <input type="file" name="file" id="form-file" required>
+                            <button type="submit" id="form-submit-button">Upload</button>
                         </form>
+                        <div class="form-upload-result row" id="form-upload-summary" style="display: none;">
+                            <div class="column grow gap-8">
+                                <h1 id="form-upload-filename"></h1>
+                                <p class="small-font text-gray" id="form-url" style="display: none"></p>
+                            </div>
+                            <div class="row gap-8" id="form-actions" style="display: none;">
+                                <button onclick="copyLink()">Copy</button>
+                                <button onclick="openLink()">Open</button>
+                            </div>
+                            <button onclick="uploadForm()" id="form-upload-button">Upload</button>
+                        </div>
                     </div>
                 </section>
 
@@ -117,5 +133,80 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
         </div>
     </div>
 </body>
+
+<script>
+    let lastUrl = null;
+
+    const formFile = document.getElementById("form-file");
+    const formSubmitButton = document.getElementById("form-submit-button");
+
+    // Decorating the form
+    const form = document.getElementById("form-upload");
+    formSubmitButton.style.display = 'none';
+    formFile.style.display = 'none';
+    form.innerHTML += '<div class="form-dropzone" id="form-dropzone"><h1>Click to select file</h1><p>The upload will start immediately after selection</p></div>';
+
+    document.getElementById("form-dropzone").addEventListener("click", () => formFile.click());
+    formFile.addEventListener("change", () => previewFile());
+
+    function previewFile() {
+        const file = formFile.files[0];
+        document.getElementById("form-dropzone").style.display = 'none';
+        document.getElementById("form-upload-summary").style.display = 'flex';
+        document.getElementById("form-upload-button").style.display = 'flex';
+        document.getElementById("form-upload-filename").innerHTML = file.name;
+        document.getElementById("form-reset-button").style.display = 'flex';
+    }
+
+    function uploadForm() {
+        lastUrl = null;
+        const form = new FormData();
+        form.append("file", formFile.files[0]);
+
+        fetch("/upload.php", {
+            "method": "POST",
+            "headers": {
+                "Accept": "application/json"
+            },
+            "body": form
+        })
+            .then((r) => r.json())
+            .then((json) => {
+                if (json.status_code != 201) {
+                    alert(json.message);
+                    return;
+                }
+
+                const url = document.getElementById("form-url");
+                url.innerHTML = json.data.urls.download_url;
+                lastUrl = json.data.urls.download_url;
+                url.style.display = 'flex';
+
+                document.getElementById("form-actions").style.display = 'flex';
+                document.getElementById("form-upload-button").style.display = 'none';
+            })
+            .catch((err) => {
+                alert("Something went wrong! More info in the console.");
+                console.error(err);
+            });
+    }
+
+    function resetUpload() {
+        document.getElementById("form-upload-summary").style.display = 'none';
+        document.getElementById("form-actions").style.display = 'none';
+        document.getElementById("form-url").style.display = 'none';
+        document.getElementById("form-reset-button").style.display = 'none';
+        document.getElementById("form-dropzone").style.display = 'flex';
+    }
+
+    function copyLink() {
+        if (lastUrl) navigator.clipboard.writeText(lastUrl);
+    }
+
+    function openLink() {
+        if (lastUrl) window.location.href = lastUrl;
+    }
+
+</script>
 
 </html>

@@ -2,6 +2,8 @@
     --box-tab-background: #b9caaf;
     --background: linear-gradient(0deg, #b9caaf, #eaffdd);
     --border: #94a58a;
+    --file-dropdown-background: #eef3ec;
+    --file-dropdown-background-hover: linear-gradient(0deg, #d6eecc, #eef3ec);
 }
 
 * {
@@ -66,6 +68,9 @@ main,
     padding: 8px;
     font-weight: bold;
     background: var(--box-tab-background);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 .box:has(.tab):has(.content) .tab {
@@ -113,5 +118,76 @@ main,
 
 .uploaded-file .info {
     font-size: 12px;
+    color: gray;
+}
+
+.form-dropzone {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    background: var(--file-dropdown-background);
+    color: var(--border);
+
+    border: 4px dashed var(--border);
+    padding: 48px 16px;
+}
+
+.form-dropzone:hover {
+    cursor: pointer;
+    background: var(--file-dropdown-background-hover);
+}
+
+.form-upload-result {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-upload-result .url {
+    background: var(--file-dropdown-background);
+    border: 1px solid var(--border);
+
+    max-width: 128px;
+    overflow-x: scroll;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    white-space: nowrap;
+}
+
+#form-upload-filename {
+    max-width: 256px;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+}
+
+.gap-8 {
+    gap: 8px;
+}
+
+.grow {
+    flex-grow: 1;
+}
+
+.small-font {
+    font-size: 12px;
+}
+
+.text-gray {
     color: gray;
 }
