@@ -336,3 +336,32 @@ pub async fn handle_image_update(
         data: Some(image),
     });
 }
+
+pub fn check_expired_images() {
+    let conn = &mut establish_connection();
+
+    let images: Vec<(String, Option<NaiveDateTime>, NaiveDateTime)> = im::images
+        .filter(im::expires_at.is_not_null())
+        .select((im::id, im::expires_at, im::uploaded_at))
+        .get_results(conn)
+        .expect("Error loading images");
+
+    let utc = Utc::now().naive_utc();
+    let mut count = 0;
+
+    for (id, expires_at, uploaded_at) in images {
+        if let Some(expires_at) = expires_at {
+            if expires_at.ne(&uploaded_at) && expires_at.le(&utc) {
+                diesel::delete(im::images.find(&id))
+                    .execute(conn)
+                    .expect("Error deleting expired image");
+
+                count += 1;
+            }
+        }
+    }
+
+    if count > 0 {
+        println!("Deleted {} expired images", count);
+    }
+}

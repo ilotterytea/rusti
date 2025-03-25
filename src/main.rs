@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use actix_web::{App, HttpServer, web};
 use config::Configuration;
 use handlebars::Handlebars;
@@ -19,6 +21,14 @@ pub struct Response<T> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // a thread for checking image expirations
+    tokio::spawn(async move {
+        loop {
+            image::check_expired_images();
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+    });
+
     let config: Configuration = match std::fs::read_to_string("rusti.toml") {
         Ok(contents) => {
             toml::from_str::<Configuration>(&contents).expect("Error parsing rusti.toml")
