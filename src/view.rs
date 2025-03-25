@@ -57,6 +57,7 @@ pub async fn get_index_view(hb: web::Data<Handlebars<'_>>) -> impl Responder {
         .render(
             "index.hbs",
             &json!({
+                "is_home": true,
                 "rusti_name": "rusti",
                 "rusti_description": "a tiny, anonymous image service",
                 "rusti_version": env!("CARGO_PKG_VERSION")
@@ -98,6 +99,7 @@ pub async fn get_gallery_view(
                 "max_pages": max_pages,
                 "size": size,
 
+                "is_gallery": true,
                 "page_title": format!("gallery (page {}/{})", page, max_pages),
                 "rusti_name": "rusti",
                 "rusti_description": "a tiny, anonymous image service",

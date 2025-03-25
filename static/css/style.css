@@ -28,13 +28,40 @@ p a {
 -----------
 */
 
+.header {
+   margin-bottom: 32px;
+}
+
+.navbar {
+   display: flex;
+   flex-direction: row;
+   padding: 0 16px;
+
+   border-bottom: 4px solid lightgray;
+}
+
+.navbar-item {
+   color: gray;
+   text-decoration: none;
+   padding: 4px 8px;
+}
+
+.navbar-item:hover {
+   text-decoration: underline;
+}
+
+.navbar-item.selected {
+   color: black;
+   background-color: lightgray;
+}
+
 .brand {
    display: flex;
    flex-direction: row;
 
    align-items: center;
 
-   padding-bottom: 32px;
+   margin-bottom: 16px;
 }
 
 .brand img {

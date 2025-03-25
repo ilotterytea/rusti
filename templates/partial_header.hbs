@@ -6,4 +6,8 @@
             <p>{{ rusti_description }}</p>
         </div>
     </div>
+    <div class="navbar">
+        <a href="/" class="navbar-item {{#if is_home}}selected{{/if}}">home</a>
+        <a href="/gallery" class="navbar-item {{#if is_gallery}}selected{{/if}}">gallery</a>
+    </div>
 </div>
