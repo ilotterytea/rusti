@@ -46,7 +46,7 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
                         src="/static/img/icons/chad.png" width="20"></noscript>
 
                 <section class="brand">
-                    <img src="/static/img/brand.png" alt="<?= $instance_name ?>">
+                    <img src="/static/img/brand.webp" alt="<?= $instance_name ?>">
                     <h1><?= $instance_name ?></h1>
                 </section>
 
