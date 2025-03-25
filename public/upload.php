@@ -80,24 +80,6 @@ $data = [
     ]
 ];
 
-// saving locally saved file
-$uploaded_files_cookies = json_decode($_COOKIE['UPLOADED_FILES'] ?? '[]') ?? [];
-
-if (!is_array($uploaded_files_cookies)) {
-    $uploaded_files_cookies = [];
-}
-
-array_unshift($uploaded_files_cookies, $data);
-
-$cookie_body = json_encode($uploaded_files_cookies, JSON_UNESCAPED_SLASHES);
-
-while (strlen($cookie_body) >= 4096) {
-    array_pop($uploaded_files_cookies);
-    $cookie_body = json_encode($uploaded_files_cookies, JSON_UNESCAPED_SLASHES);
-}
-
-setcookie('UPLOADED_FILES', $cookie_body, time() + 60 * 60 * 24 * 365, '/');
-
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
     http_response_code(201);
     header(header: 'Content-Type: application/json');

@@ -1,9 +1,4 @@
 <?php
-$uploaded_files_cookies = json_decode(stripslashes($_COOKIE['UPLOADED_FILES'] ?? '[]'), true) ?? [];
-if (!is_array($uploaded_files_cookies)) {
-    $uploaded_files_cookies = [];
-}
-
 // cv pasted from https://gist.github.com/eusonlito/5099936
 function size($dir): array
 {
@@ -44,10 +39,12 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
 </head>
 
 <body>
-    <noscript>Enabled limited functionality mode</noscript>
     <div class="container">
         <div class="wrapper">
             <main>
+                <noscript title="&gt; still no upload history and fancy upload button">JavaScript deniers <img
+                        src="/static/img/icons/chad.png" width="20"></noscript>
+
                 <section class="brand">
                     <img src="/static/img/brand.png" alt="<?= $instance_name ?>">
                     <h1><?= $instance_name ?></h1>
@@ -55,64 +52,23 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
 
                 <section class="box file-upload">
                     <div class="tab">
-                        <div class="grow">
-                            <p>File Upload</p>
-                        </div>
-                        <button onclick="resetUpload()" id="form-reset-button" style="display: none;"><img
-                                src="/static/img/icons/cancel.png" alt="X"></button>
+                        <p>File Upload</p>
                     </div>
                     <div class="content">
                         <form action="/upload.php" method="post" enctype="multipart/form-data" id="form-upload">
                             <input type="file" name="file" id="form-file" required>
                             <button type="submit" id="form-submit-button">Upload</button>
                         </form>
-                        <div class="form-upload-result row" id="form-upload-summary" style="display: none;">
-                            <div class="column grow gap-8">
-                                <h1 id="form-upload-filename"></h1>
-                                <p class="small-font text-gray" id="form-url" style="display: none"></p>
-                            </div>
-                            <div class="row gap-8" id="form-actions" style="display: none;">
-                                <button onclick="copyLink()">Copy</button>
-                                <button onclick="openLink()">Open</button>
-                            </div>
-                            <button onclick="uploadForm()" id="form-upload-button">Upload</button>
-                        </div>
                     </div>
                 </section>
 
-                <?php if (!empty($uploaded_files_cookies)): ?>
-                    <section class="box">
-                        <div class="tab">
-                            <p>Uploaded Files<span title="Stored locally in your cookies">*</span></p>
-                        </div>
-                        <div class="content uploaded-files">
-                            <?php foreach ($uploaded_files_cookies as $f): ?>
-                                <div class="box uploaded-file">
-                                    <div class="preview">
-                                        <?php if (str_starts_with($f['mime'], 'image/')): ?>
-                                            <img src="<?= $f['urls']['download_url'] ?>" alt="An image.">
-                                        <?php elseif (str_starts_with($f['mime'], 'video/')): ?>
-                                            <video muted>
-                                                <source src="<?= $f['urls']['download_url'] ?>" type="<?= $f['mime'] ?>"
-                                                    alt="A video.">
-                                            </video>
-                                        <?php else: ?>
-                                            <p><i>Non-displayable file.</i></p>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="summary">
-                                        <h3><?= "{$f['id']}.{$f['extension']}" ?></h3>
-                                        <div class="info">
-                                            <p><?= $f['mime'] ?></p>
-                                            <p><?= sprintf('%.2f', $f['size'] / 1024.0 / 1024.0) . 'MB' ?></p>
-                                        </div>
-                                        <a href="<?= $f['urls']['download_url'] ?>" target="_BLANK">[ Open ]</a>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </section>
-                <?php endif; ?>
+                <section class="box" id="uploaded-files-wrapper" style="display:none">
+                    <div class="tab">
+                        <p>Uploaded Files<span title="Stored locally">*</span></p>
+                    </div>
+                    <div class="content uploaded-files" id="uploaded-files">
+                    </div>
+                </section>
             </main>
             <footer>
                 <?php
@@ -137,6 +93,8 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
 <script>
     let lastUrl = null;
 
+    const uploadedFiles = document.getElementById("uploaded-files");
+
     const formFile = document.getElementById("form-file");
     const formSubmitButton = document.getElementById("form-submit-button");
 
@@ -146,20 +104,15 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
     formFile.style.display = 'none';
     form.innerHTML += '<div class="form-dropzone" id="form-dropzone"><h1>Click to select file</h1><p>The upload will start immediately after selection</p></div>';
 
-    document.getElementById("form-dropzone").addEventListener("click", () => formFile.click());
-    formFile.addEventListener("change", () => previewFile());
+    const formDropzone = document.getElementById("form-dropzone");
+    formDropzone.addEventListener("click", () => formFile.click());
 
-    function previewFile() {
-        const file = formFile.files[0];
-        document.getElementById("form-dropzone").style.display = 'none';
-        document.getElementById("form-upload-summary").style.display = 'flex';
-        document.getElementById("form-upload-button").style.display = 'flex';
-        document.getElementById("form-upload-filename").innerHTML = file.name;
-        document.getElementById("form-reset-button").style.display = 'flex';
-    }
+    formFile.addEventListener("change", () => uploadForm());
 
     function uploadForm() {
         lastUrl = null;
+        formFile.setAttribute("disabled", true);
+
         const form = new FormData();
         form.append("file", formFile.files[0]);
 
@@ -177,36 +130,78 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
                     return;
                 }
 
-                const url = document.getElementById("form-url");
-                url.innerHTML = json.data.urls.download_url;
-                lastUrl = json.data.urls.download_url;
-                url.style.display = 'flex';
-
-                document.getElementById("form-actions").style.display = 'flex';
-                document.getElementById("form-upload-button").style.display = 'none';
+                addJsonFileToStorage(json.data);
+                uploadedFiles.innerHTML = buildJsonFile(json.data, true) + uploadedFiles.innerHTML;
+                formFile.removeAttribute("disabled");
             })
             .catch((err) => {
                 alert("Something went wrong! More info in the console.");
                 console.error(err);
+                formFile.removeAttribute("disabled");
             });
     }
 
-    function resetUpload() {
-        document.getElementById("form-upload-summary").style.display = 'none';
-        document.getElementById("form-actions").style.display = 'none';
-        document.getElementById("form-url").style.display = 'none';
-        document.getElementById("form-reset-button").style.display = 'none';
-        document.getElementById("form-dropzone").style.display = 'flex';
+    function addJsonFileToStorage(json) {
+        let files = localStorage.getItem("uploaded_files");
+
+        if (files == null) {
+            files = "[]";
+        }
+
+        files = JSON.parse(files);
+
+        files.unshift(json);
+        localStorage.setItem("uploaded_files", JSON.stringify(files));
     }
 
-    function copyLink() {
-        if (lastUrl) navigator.clipboard.writeText(lastUrl);
+    function rebuildJsonFileStorage() {
+        if (localStorage.getItem("uploaded_files") == null) {
+            return;
+        }
+
+        document.getElementById("uploaded-files-wrapper").style.display = 'grid';
+
+        const files = JSON.parse(localStorage.getItem("uploaded_files"));
+        let htmlString = "";
+
+        for (const file of files) {
+            htmlString += buildJsonFile(file, false);
+        }
+
+        uploadedFiles.innerHTML = htmlString;
     }
 
-    function openLink() {
-        if (lastUrl) window.location.href = lastUrl;
+    function buildJsonFile(file, highlight) {
+        let htmlPreview = "<p><i>Non-displayable file.</i></p>";
+
+        if (file.mime.startsWith("image/")) {
+            htmlPreview = `<img src="${file.urls.download_url}" alt="An image." />`;
+        } else if (file.mime.startsWith("video")) {
+            htmlPreview = `
+                <video muted>
+                <source src="${file.urls.download_url}" type="${file.mime}" alt="A video.">
+                </video>
+                `;
+        }
+
+        return `
+            <div class="box uploaded-file${highlight ? " highlight" : ""}">
+                <div class="preview">
+                    ${htmlPreview}
+                </div>
+                <div class="summary">
+                    <h3>${file.id}.${file.extension}</h3>
+                    <div class="info">
+                        <p>${file.mime}</p>
+                        <p>${(file.size / 1024 / 1024).toFixed(2)}MB</p>
+                    </div>
+                    <a href="${file.urls.download_url}" target="_BLANK">[ Open ]</a>
+                </div>
+            </div>
+            `;
     }
 
+    rebuildJsonFileStorage();
 </script>
 
 </html>
