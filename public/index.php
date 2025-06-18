@@ -146,6 +146,7 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
                 }
 
                 addJsonFileToStorage(json.data);
+                document.getElementById("uploaded-files-wrapper").style.display = 'grid';
                 uploadedFiles.innerHTML = buildJsonFile(json.data, true) + uploadedFiles.innerHTML;
                 formFile.removeAttribute("disabled");
             })
