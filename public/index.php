@@ -102,19 +102,34 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
     const form = document.getElementById("form-upload");
     formSubmitButton.style.display = 'none';
     formFile.style.display = 'none';
-    form.innerHTML += '<div class="form-dropzone" id="form-dropzone"><h1>Click to select file</h1><p>The upload will start immediately after selection</p></div>';
+    form.innerHTML += '<div class="form-dropzone" id="form-dropzone"><h1>Click or drag files here</h1><p>The upload will start immediately after selection/drop</p></div>';
 
     const formDropzone = document.getElementById("form-dropzone");
     formDropzone.addEventListener("click", () => formFile.click());
+    formDropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.items) {
+            for (const item of e.dataTransfer.items) {
+                if (item.kind === "file") {
+                    const file = item.getAsFile();
+                    uploadForm(file);
+                    break;
+                }
+            }
+        }
+    });
+    formDropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+    });
 
-    formFile.addEventListener("change", () => uploadForm());
+    formFile.addEventListener("change", (e) => uploadForm(e.target.files[0]));
 
-    function uploadForm() {
+    function uploadForm(file) {
         lastUrl = null;
         formFile.setAttribute("disabled", true);
 
         const form = new FormData();
-        form.append("file", formFile.files[0]);
+        form.append("file", file);
 
         fetch("/upload.php", {
             "method": "POST",
