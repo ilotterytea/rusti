@@ -127,6 +127,7 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
     function uploadForm(file) {
         lastUrl = null;
         formFile.setAttribute("disabled", true);
+        formDropzone.innerHTML = '<h1>Uploading...</h1>';
 
         const form = new FormData();
         form.append("file", file);
@@ -149,11 +150,14 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
                 document.getElementById("uploaded-files-wrapper").style.display = 'grid';
                 uploadedFiles.innerHTML = buildJsonFile(json.data, true) + uploadedFiles.innerHTML;
                 formFile.removeAttribute("disabled");
+
+                formDropzone.innerHTML = '<h1>Click or drag files here</h1><p>The upload will start immediately after selection/drop</p>';
             })
             .catch((err) => {
                 alert("Something went wrong! More info in the console.");
                 console.error(err);
                 formFile.removeAttribute("disabled");
+                formDropzone.innerHTML = '<h1>Click or drag files here</h1><p>The upload will start immediately after selection/drop</p>';
             });
     }
 
