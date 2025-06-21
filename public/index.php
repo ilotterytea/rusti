@@ -1,38 +1,27 @@
 <?php
-// cv pasted from https://gist.github.com/eusonlito/5099936
-function size($dir): array
-{
-    $size = 0;
-    $count = 0;
-
-    foreach (glob(rtrim($dir, '/') . '/*') as $each) {
-        $size += is_file($each) ? filesize($each) : size($each);
-        $count++;
-    }
-
-    return [$size, $count];
+// creating a new config if it doesn't exist
+if (!file_exists('../config.php')) {
+    copy('../config.sample.php', '../config.php');
 }
 
-$upload_directory = './static/uploads';
-$configpath = $_SERVER['DOCUMENT_ROOT'] . '/../tinyi.ini';
-$config = null;
+include_once '../config.php';
 
-if (file_exists($configpath)) {
-    $config = parse_ini_file($configpath, true);
+$db = new PDO(DB_URL);
 
-    if (isset($config['files']['upload_directory'])) {
-        $upload_directory = $config['files']['upload_directory'];
-    }
-}
+// creating database tables if they don't exist
+$db->exec(file_get_contents('../database.sql'));
 
-[$file_overall_size, $file_count] = size($upload_directory);
-
-$instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
+// file stats
+$file_stats = $db->query("SELECT COUNT(*), SUM(size) FROM posts");
+$file_stats->execute();
+$file_stats = $file_stats->fetch();
+$file_count = $file_stats[0];
+$file_overall_size = $file_stats[1];
 ?>
 <html>
 
 <head>
-    <title><?= $instance_name ?></title>
+    <title><?= INSTANCE_NAME ?></title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
@@ -46,8 +35,8 @@ $instance_name = $config['instance']['name'] ?? $_SERVER['HTTP_HOST'];
                         src="/static/img/icons/chad.png" width="20"></noscript>
 
                 <section class="brand">
-                    <img src="/static/img/brand.webp" alt="<?= $instance_name ?>">
-                    <h1><?= $instance_name ?></h1>
+                    <img src="/static/img/brand.webp" alt="<?= INSTANCE_NAME ?>">
+                    <h1><?= INSTANCE_NAME ?></h1>
                 </section>
 
                 <section class="box file-upload">
