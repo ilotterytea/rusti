@@ -190,3 +190,14 @@ function mime2ext($mime)
 
     return isset($mime_map[$mime]) ? $mime_map[$mime] : false;
 }
+
+function json_response($data, $message = null, $code = 200)
+{
+    http_response_code($code);
+    header('Content-Type: application/json');
+    return json_encode([
+        'status_code' => $code,
+        'message' => $message,
+        'data' => $data
+    ], JSON_UNESCAPED_SLASHES);
+}

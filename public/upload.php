@@ -2,8 +2,7 @@
 include_once '../lib/utils.php';
 
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
-    http_response_code(403);
-    exit('Method not allowed!');
+    exit(json_response(null, 'Method not allowed!', 403));
 }
 
 if (!isset($_FILES['file'])) {
@@ -38,8 +37,7 @@ $file_name = pathinfo($file['name'], PATHINFO_FILENAME);
 $file_extension = mime2ext($file_mime);
 
 if (!$file_extension) {
-    http_response_code(400);
-    exit("Unsupported mime type: {$file_mime}");
+    exit(json_response(null, empty($file_mime) ? 'Corrupted file' : "Unsupported MIME type: {$file_mime}", 400));
 }
 
 $file_id = "";
@@ -57,13 +55,11 @@ do {
 } while (file_exists("{$upload_directory}/{$file_id}.{$file_extension}"));
 
 if (empty($file_id)) {
-    http_response_code(500);
-    exit('Failed to generate an ID for a file');
+    exit(json_response(null, 'Exceeded time to generate an ID for a file. Try again later.', 500));
 }
 
-if (!move_uploaded_file($file['tmp_name'], "{$upload_directory}/{$file_id}.{$file_extension}")) {
-    http_response_code(500);
-    exit('Failed to save a file! Try again.');
+if (!move_uploaded_file($file['tmp_name'], FILE_UPLOAD_DIRECTORY . "/{$file_id}.{$file_extension}")) {
+    exit(json_response(null, 'Failed to save a file! Try again later.', 500));
 }
 
 $url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]";
@@ -81,13 +77,7 @@ $data = [
 ];
 
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
-    http_response_code(201);
-    header(header: 'Content-Type: application/json');
-    echo json_encode([
-        'status_code' => 201,
-        'message' => null,
-        'data' => $data
-    ], JSON_UNESCAPED_SLASHES);
+    exit(json_response($data, null, 201));
 } else {
     header("Location: {$download_url}");
 }
