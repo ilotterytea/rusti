@@ -1,4 +1,5 @@
 <?php
+include_once '../config.php';
 include_once '../lib/utils.php';
 
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
@@ -6,26 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {
 }
 
 if (!isset($_FILES['file'])) {
-    http_response_code(400);
-    exit('Field "file" must be set!');
-}
-
-$upload_directory = './static/uploads';
-
-$configpath = $_SERVER['DOCUMENT_ROOT'] . '/../tinyi.ini';
-$config = [];
-
-if (file_exists($configpath)) {
-    $config = parse_ini_file($configpath, true);
-
-    if (isset($config['files']['upload_directory'])) {
-        $upload_directory = $config['files']['upload_directory'];
-    }
-}
-
-if (!isset($config['files']['upload_directory'])) {
-    http_response_code(500);
-    exit('No files.upload_directory set in tinyi.ini!');
+    exit(json_response(null, 'Field "file" must be set!', 400));
 }
 
 $file = $_FILES['file'];
@@ -41,18 +23,18 @@ if (!$file_extension) {
 }
 
 $file_id = "";
-$file_length = intval($config['files']['file_id_length'] ?? '5');
-$file_chars = str_split($config['files']['file_id_char_pool'] ?? 'ABCabc123');
+$file_id_gen_start_time = time();
 
 do {
     $file_id = "";
-    for ($i = 0; $i < $file_length; $i++) {
-        $file_id .= $file_chars[random_int(0, count($file_chars) - 1)];
+    if (time() - $file_id_gen_start_time >= FILE_ID_GENERATION_TIMEOUT_SEC) {
+        break;
     }
-    if (isset($config['files']['upload_prefix'])) {
-        $file_id = $config['files']['upload_prefix'] . $file_id;
+    for ($i = 0; $i < FILE_ID_LENGTH; $i++) {
+        $file_id .= FILE_ID_CHARPOOL[random_int(0, count(FILE_ID_CHARPOOL) - 1)];
     }
-} while (file_exists("{$upload_directory}/{$file_id}.{$file_extension}"));
+    $file_id = FILE_ID_PREFIX . $file_id;
+} while (file_exists(FILE_UPLOAD_DIRECTORY . "/{$file_id}.{$file_extension}"));
 
 if (empty($file_id)) {
     exit(json_response(null, 'Exceeded time to generate an ID for a file. Try again later.', 500));
@@ -75,6 +57,11 @@ $data = [
         'download_url' => $download_url
     ]
 ];
+
+// saving in database
+$db = new PDO(DB_URL);
+$db->prepare('INSERT INTO posts (id, mime, extension, size, visibility) VALUES (?, ?, ?, ?, ?)')
+    ->execute([$file_id, $file_mime, $file_extension, $file_size, 0]);
 
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
     exit(json_response($data, null, 201));
