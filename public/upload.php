@@ -43,22 +43,57 @@ if (!move_uploaded_file($file['tmp_name'], FILE_UPLOAD_DIRECTORY . "/{$file_id}.
 
 $url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]";
 
-$download_url = "{$url}/{$file_id}.{$file_extension}";
+$download_url = "{$url}/{$file_id}";
 
-$data = [
-    'id' => $file_id,
-    'mime' => $file_mime,
-    'extension' => $file_extension,
-    'size' => $file_size,
-    'urls' => [
-        'download_url' => $download_url
-    ]
-];
+// setting other metadata
+$visibility = clamp(intval($_POST['visibility'] ?? '0'), 0, 1);
+$comment = str_safe($_POST['comment'] ?? '', null, false);
+if (empty($comment)) {
+    $comment = null;
+}
+
+$password = null;
+
+if (isset($_POST['password'])) {
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+}
+
+// parsing expires_at
+$expires_at = null;
+
+if (isset($_POST['expires']) && array_key_exists($_POST['expires'], FILE_EXPIRATION)) {
+    $e = $_POST['expires'];
+    $v = intval(substr($e, 0, strlen($e) - 1));
+    $m = substr($e, strlen($e) - 1);
+
+    $secs = match ($m) {
+        'd' => 86400,
+        'h' => 3600,
+        default => 0
+    };
+
+    $t = time() + $v * $secs;
+    $expires_at = date("Y-m-d H:i:s", $t);
+}
 
 // saving in database
 $db = new PDO(DB_URL);
-$db->prepare('INSERT INTO posts (id, mime, extension, size, visibility) VALUES (?, ?, ?, ?, ?)')
-    ->execute([$file_id, $file_mime, $file_extension, $file_size, 0]);
+$db->prepare('INSERT INTO posts (id, mime, extension, size, visibility, comment, password, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    ->execute([$file_id, $file_mime, $file_extension, $file_size, $visibility, $comment, $password, $expires_at]);
+
+// getting data from database
+$stmt = $db->prepare("SELECT * FROM posts WHERE id = ?");
+$stmt->execute([$file_id]);
+
+$data = $stmt->fetch(PDO::FETCH_ASSOC);
+unset($data['password']);
+$data['urls'] = [
+    'download_url' => $download_url
+];
+
+if (isset($password)) {
+    $data['urls']['deletion_url'] = "{$url}/file/delete.php?id={$file_id}&key={$_POST['password']}";
+}
 
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
     exit(json_response($data, null, 201));

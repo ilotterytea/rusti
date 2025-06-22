@@ -210,3 +210,28 @@ function generate_random_chars($length, $charpool)
     }
     return $output;
 }
+
+function clamp(int $current, int $min, int $max): int
+{
+    return max($min, min($max, $current));
+}
+
+function str_safe(string $s, int|null $max_length, bool $remove_new_lines = true): string
+{
+    $output = $s;
+
+    if ($remove_new_lines) {
+        $output = str_replace(PHP_EOL, "", $output);
+    }
+
+    $output = htmlspecialchars($output);
+    $output = strip_tags($output);
+
+    if ($max_length) {
+        $output = substr($output, 0, $max_length);
+    }
+
+    $output = trim($output);
+
+    return $output;
+}

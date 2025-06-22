@@ -1,4 +1,6 @@
 <?php
+include_once '../lib/utils.php';
+
 // creating a new config if it doesn't exist
 if (!file_exists('../config.php')) {
     copy('../config.sample.php', '../config.php');
@@ -44,9 +46,48 @@ $file_overall_size = $file_stats[1];
                         <p>File Upload</p>
                     </div>
                     <div class="content">
-                        <form action="/upload.php" method="post" enctype="multipart/form-data" id="form-upload">
-                            <input type="file" name="file" id="form-file" required>
-                            <button type="submit" id="form-submit-button">Upload</button>
+                        <form action="/upload.php" method="post" enctype="multipart/form-data" class="column gap-8">
+                            <div id="form-upload">
+                                <input type="file" name="file" id="form-file" required>
+                                <button type="submit" id="form-submit-button">Upload</button>
+                            </div>
+                            <details>
+                                <summary>Options <span class="small-font">(set before upload)</span></summary>
+
+                                <table class="vertical">
+                                    <tr>
+                                        <th>Comment</th>
+                                        <td><textarea name="comment" id="form-comment" placeholder="Empty"></textarea>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Visibility</th>
+                                        <td>
+                                            <select name="visibility" id="form-visibility">
+                                                <option value="0">Unlisted</option>
+                                                <option value="1">Public</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Password <span class="hint"
+                                                title="Password is used for file deletion">[?]</span></th>
+                                        <td><input type="text" id="form-password" name="password"
+                                                value="<?= generate_random_chars(FILE_ID_LENGTH * 2, FILE_ID_CHARPOOL) ?>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>File Expiration</th>
+                                        <td>
+                                            <select name="expires" id="form-expires">
+                                                <?php foreach (FILE_EXPIRATION as $k => $v): ?>
+                                                    <option value="<?= $k ?>"><?= $v ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </details>
                         </form>
                     </div>
                 </section>
@@ -120,6 +161,10 @@ $file_overall_size = $file_stats[1];
 
         const form = new FormData();
         form.append("file", file);
+        form.append("comment", document.getElementById("form-comment").value);
+        form.append("visibility", document.getElementById("form-visibility").value);
+        form.append("password", document.getElementById("form-password").value);
+        form.append("expires", document.getElementById("form-expires").value);
 
         fetch("/upload.php", {
             "method": "POST",

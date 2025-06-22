@@ -32,6 +32,25 @@ footer {
     border-top: 1px solid var(--border);
 }
 
+table.vertical {
+    border-spacing: 8px;
+}
+
+table.vertical th {
+    text-align: right;
+    vertical-align: top;
+}
+
+textarea {
+    width: 256px;
+    height: 128px;
+    resize: vertical;
+}
+
+summary:hover {
+    cursor: pointer;
+}
+
 .container {
     width: 100%;
     min-height: 100vh;
@@ -159,6 +178,12 @@ main,
 .form-dropzone:hover {
     cursor: pointer;
     background: var(--file-dropdown-background-hover);
+}
+
+.hint {
+    font-size: 10px;
+    cursor: help;
+    vertical-align: top;
 }
 
 .row {
