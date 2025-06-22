@@ -201,3 +201,12 @@ function json_response($data, $message = null, $code = 200)
         'data' => $data
     ], JSON_UNESCAPED_SLASHES);
 }
+
+function generate_random_chars($length, $charpool)
+{
+    $output = "";
+    for ($i = 0; $i < $length; $i++) {
+        $output .= $charpool[random_int(0, count($charpool) - 1)];
+    }
+    return $output;
+}

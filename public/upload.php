@@ -30,10 +30,7 @@ do {
     if (time() - $file_id_gen_start_time >= FILE_ID_GENERATION_TIMEOUT_SEC) {
         break;
     }
-    for ($i = 0; $i < FILE_ID_LENGTH; $i++) {
-        $file_id .= FILE_ID_CHARPOOL[random_int(0, count(FILE_ID_CHARPOOL) - 1)];
-    }
-    $file_id = FILE_ID_PREFIX . $file_id;
+    $file_id = FILE_ID_PREFIX . generate_random_chars(FILE_ID_LENGTH, FILE_ID_CHARPOOL);
 } while (file_exists(FILE_UPLOAD_DIRECTORY . "/{$file_id}.{$file_extension}"));
 
 if (empty($file_id)) {
