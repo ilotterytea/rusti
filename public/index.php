@@ -142,7 +142,7 @@ $file_overall_size = $file_stats[1];
     const form = document.getElementById("form-upload");
     formSubmitButton.style.display = 'none';
     formFile.style.display = 'none';
-    form.innerHTML += '<div class="form-dropzone" id="form-dropzone"><h1>Click or drag files here</h1><p>The upload will start immediately after selection/drop</p></div>';
+    form.innerHTML += '<div class="form-dropzone" id="form-dropzone"><h1>Click to select or drag & drop file here</h1><p>The upload will start immediately after selection/drop</p></div>';
 
     const formDropzone = document.getElementById("form-dropzone");
     formDropzone.addEventListener("click", () => formFile.click());
