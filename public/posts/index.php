@@ -189,7 +189,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                             <div class="file">
                                 <a href="/<?= $post['id'] ?>" target="_BLANK">
                                     <?php if (str_starts_with($post['mime'], 'image/') || str_starts_with($post['mime'], 'video/')): ?>
-                                        <img src="/thumbnails/<?= $post['id'] ?>.jpg" alt="<?= $post['id'] ?>">
+                                        <img src="/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>">
                                     <?php else: ?>
                                         <p><?= $post['id'] ?></p>
                                     <?php endif; ?>

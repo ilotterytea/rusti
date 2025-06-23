@@ -238,14 +238,8 @@ $file_overall_size = $file_stats[1];
     function buildJsonFile(file, highlight) {
         let htmlPreview = "<p><i>Non-displayable file.</i></p>";
 
-        if (file.mime.startsWith("image/")) {
-            htmlPreview = `<img src="${file.urls.download_url}" alt="An image." />`;
-        } else if (file.mime.startsWith("video")) {
-            htmlPreview = `
-                <video muted>
-                <source src="${file.urls.download_url}" type="${file.mime}" alt="A video.">
-                </video>
-                `;
+        if (file.mime.startsWith("image/") || file.mime.startsWith("video/")) {
+            htmlPreview = `<img src="/thumbnails/${file.id}.jpeg" alt="Missing thumbnail" />`;
         }
 
         return `
