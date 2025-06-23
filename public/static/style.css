@@ -88,6 +88,11 @@ main,
 .box {
     border: 2px solid black;
     padding: 8px;
+    background: white;
+}
+
+.box:has(.tab) {
+    background: none;
 }
 
 .box:has(.tab) {
@@ -180,6 +185,25 @@ main,
     background: var(--file-dropdown-background-hover);
 }
 
+.files>.file {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 128px;
+    height: 128px;
+}
+
+.files>.file>img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.file-preview img,
+.file-preview video {
+    max-width: 80vh;
+    max-height: 50vh;
+}
+
 .hint {
     font-size: 10px;
     cursor: help;
@@ -189,6 +213,11 @@ main,
 .row {
     display: flex;
     flex-direction: row;
+}
+
+.row-reverse {
+    display: flex;
+    flex-direction: row-reverse;
 }
 
 .column {
@@ -204,10 +233,22 @@ main,
     flex-grow: 1;
 }
 
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
 .small-font {
     font-size: 12px;
 }
 
 .text-gray {
     color: gray;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.align-center {
+    align-items: center;
 }
