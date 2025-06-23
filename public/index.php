@@ -46,7 +46,8 @@ $file_overall_size = $file_stats[1];
                         <p>File Upload</p>
                     </div>
                     <div class="content">
-                        <form action="/upload.php" method="post" enctype="multipart/form-data" class="column gap-8">
+                        <form action="/posts/upload.php" method="post" enctype="multipart/form-data"
+                            class="column gap-8">
                             <div id="form-upload">
                                 <input type="file" name="file" id="form-file" required>
                                 <button type="submit" id="form-submit-button">Upload</button>
@@ -166,7 +167,7 @@ $file_overall_size = $file_stats[1];
         form.append("password", document.getElementById("form-password").value);
         form.append("expires", document.getElementById("form-expires").value);
 
-        fetch("/upload.php", {
+        fetch("/posts/upload.php", {
             "method": "POST",
             "headers": {
                 "Accept": "application/json"

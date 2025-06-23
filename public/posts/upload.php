@@ -1,6 +1,6 @@
 <?php
-include_once '../config.php';
-include_once '../lib/utils.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
 
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     exit(json_response(null, 'Method not allowed!', 403));
@@ -86,13 +86,13 @@ $stmt = $db->prepare("SELECT * FROM posts WHERE id = ?");
 $stmt->execute([$file_id]);
 
 $data = $stmt->fetch(PDO::FETCH_ASSOC);
-unset($data['password']);
+$data['password'] = $_POST['password'];
 $data['urls'] = [
     'download_url' => $download_url
 ];
 
 if (isset($password)) {
-    $data['urls']['deletion_url'] = "{$url}/file/delete.php?id={$file_id}&key={$_POST['password']}";
+    $data['urls']['deletion_url'] = "{$url}/posts/delete.php?id={$file_id}&key={$_POST['password']}";
 }
 
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
