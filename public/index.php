@@ -39,6 +39,9 @@ $file_overall_size = $file_stats[1];
                 <section class="brand">
                     <img src="/static/img/brand.webp" alt="<?= INSTANCE_NAME ?>">
                     <h1><?= INSTANCE_NAME ?></h1>
+                    <?php if (FILES_LIST_ENABLED): ?>
+                        <a href="/posts/">[ Catalogue ]</a>
+                    <?php endif; ?>
                 </section>
 
                 <section class="box file-upload">
