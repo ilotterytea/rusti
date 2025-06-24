@@ -23,12 +23,16 @@ if (!$post) {
 }
 
 $delete_file =
-    isset($_SESSION['user'], $post['uploaded_by']) &&
     (
-        ($_SESSION['user']['id'] == $post['uploaded_by']) || /* SAME USER */
-        $_SESSION['user']['is_admin'] /* ADMIN */
-    ) /* USER */ ||
-    (isset($_GET['password'], $post['password']) && password_verify($_GET['password'], $post['password'])) /* ANON */
+        isset($_SESSION['user']) &&
+        (
+            (isset($post['uploaded_by']) && $_SESSION['user']['id'] == $post['uploaded_by']) || /* SAME USER */
+            $_SESSION['user']['is_admin'] /* ADMIN */
+        ) /* USER */
+    ) ||
+    (
+        isset($_GET['password'], $post['password']) && password_verify($_GET['password'], $post['password'])
+    ) /* ANON */
 ;
 
 if ($delete_file) {
