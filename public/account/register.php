@@ -13,11 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = str_safe($_POST['username'], USER_NAME_LENGTH[1]);
     if (strlen($username) < USER_NAME_LENGTH[0] || strlen($username) > USER_NAME_LENGTH[1]) {
         generate_alert('/account/register.php', null, sprintf('Your username length must be between %s and %s characters', USER_NAME_LENGTH[0], USER_NAME_LENGTH[1]), 400);
+        exit;
     }
 
     $password = $_POST['password'];
     if (strlen($password) < USER_PASSWORD_LENGTH) {
         generate_alert('/account/register.php', null, sprintf('Your password must be at least %s characters', USER_PASSWORD_LENGTH), 400);
+        exit;
     }
 
     $stmt = $db->prepare("SELECT id FROM users WHERE username = ?");
@@ -43,6 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     unset($user['password']);
     unset($user['is_admin']);
+
+    setcookie('secret_key', $secret_key, time() + USER_COOKIE_TIME, '/');
 
     generate_alert('/', $user, "Created a new account: $username", 201);
     exit;
