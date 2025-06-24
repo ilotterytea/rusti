@@ -160,6 +160,47 @@ $file_overall_size = $file_stats[1];
 </body>
 
 <script>
+    // saving account files locally
+    {
+        const accountFiles = <?= json_encode(isset($_SESSION['files']) ? $_SESSION['files'] : [], JSON_UNESCAPED_SLASHES) ?>;
+
+        let storage = localStorage.getItem("uploaded_files");
+        console.log(storage);
+
+
+        if (!storage) {
+            storage = '[]';
+        }
+
+        storage = JSON.parse(storage);
+
+        accountFiles.forEach((v) => {
+            if (!storage.some((x) => x.id == v.id)) {
+                storage.push(v);
+            }
+        });
+
+        console.log(storage);
+        storage = storage.filter((x) => accountFiles.some((y) => x.id == y.id) || x.uploaded_by == null);
+
+        storage.sort((a, b) => {
+            const aDate = new Date(a.uploaded_at);
+            const bDate = new Date(b.uploaded_at);
+
+            if (aDate.getTime() > bDate.getTime()) {
+                return -1;
+            } else if (aDate.getTime() < bDate.getTime()) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+
+        console.log(storage);
+
+        localStorage.setItem("uploaded_files", JSON.stringify(storage));
+    }
+
     let lastUrl = null;
 
     const uploadedFiles = document.getElementById("uploaded-files");
