@@ -1,6 +1,10 @@
 <?php
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
+
+authorize_user();
+$is_admin = isset($_SESSION['user']) && $_SESSION['user']['is_admin'];
 
 $db = new PDO(DB_URL);
 
@@ -28,7 +32,7 @@ if (isset($_GET['id'])) {
     }
 }
 // all files
-else if (FILES_LIST_ENABLED) {
+else if (FILES_LIST_ENABLED || $is_admin) {
     // retrieving parameters
     $page = max(intval($_GET['p'] ?? '1'), 1) - 1;
     $limit = FILES_MAX_ITEMS;
@@ -36,6 +40,10 @@ else if (FILES_LIST_ENABLED) {
     $sort_by = $_GET['s'] ?? 'recent';
 
     $sql = "SELECT id, mime, extension FROM posts";
+
+    if (!$is_admin) {
+        $sql .= " WHERE visibility = 1";
+    }
 
     $sql .= " ORDER BY " . match ($sort_by) {
         'light' => 'size ASC',
@@ -182,7 +190,11 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                     <section class="brand">
                         <a href="/"><img src="/static/img/brand.webp" alt="<?= INSTANCE_NAME ?>"></a>
                         <h1>Public catalog of <?= INSTANCE_NAME ?></h1>
-                        <p>Here are only files with <u>public</u> visibility, don&apos;t worry.</p>
+                        <?php if ($is_admin): ?>
+                            <p>Here are <u>all</u> files... you need to worry about it.</p>
+                        <?php else: ?>
+                            <p>Here are only files with <u>public</u> visibility, don&apos;t worry.</p>
+                        <?php endif; ?>
                     </section>
                     <section class="files row flex-wrap gap-8">
                         <?php foreach ($posts as $post): ?>

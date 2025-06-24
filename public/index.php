@@ -51,8 +51,8 @@ $file_overall_size = $file_stats[1];
                     <h1><?= INSTANCE_NAME ?></h1>
                     <div class="row gap-8">
                         <?php if (FILES_LIST_ENABLED || (isset($_SESSION['user']) && $_SESSION['user']['is_admin'])): ?>
-                        <a href="/posts/">[ Catalogue ]</a>
-                    <?php endif; ?>
+                            <a href="/posts/">[ Catalogue ]</a>
+                        <?php endif; ?>
                     </div>
                     <div class="row-gap-8">
                         <?php if (isset($_SESSION['user'])): ?>
@@ -76,50 +76,56 @@ $file_overall_size = $file_stats[1];
                         <p>File Upload</p>
                     </div>
                     <div class="content">
-                        <form action="/posts/upload.php" method="post" enctype="multipart/form-data"
-                            class="column gap-8">
-                            <div id="form-upload">
-                                <input type="file" name="file" id="form-file" required>
-                                <button type="submit" id="form-submit-button">Upload</button>
-                            </div>
-                            <details>
-                                <summary>Options <span class="small-font">(set before upload)</span></summary>
+                        <?php if (!FILE_AUTHORIZED_UPLOAD || (FILE_AUTHORIZED_UPLOAD && isset($_SESSION['user']))): ?>
+                            <form action="/posts/upload.php" method="post" enctype="multipart/form-data"
+                                class="column gap-8">
+                                <div id="form-upload">
+                                    <input type="file" name="file" id="form-file" required>
+                                    <button type="submit" id="form-submit-button">Upload</button>
+                                </div>
+                                <details>
+                                    <summary>Options <span class="small-font">(set before upload)</span></summary>
 
-                                <table class="vertical">
-                                    <tr>
-                                        <th>Comment</th>
-                                        <td><textarea name="comment" id="form-comment" placeholder="Empty"></textarea>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Visibility</th>
-                                        <td>
-                                            <select name="visibility" id="form-visibility">
-                                                <option value="0">Unlisted</option>
-                                                <option value="1">Public</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Password <span class="hint"
-                                                title="Password is used for file deletion">[?]</span></th>
-                                        <td><input type="text" id="form-password" name="password"
-                                                value="<?= generate_random_chars(FILE_ID_LENGTH * 2, FILE_ID_CHARPOOL) ?>">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>File Expiration</th>
-                                        <td>
-                                            <select name="expires" id="form-expires">
-                                                <?php foreach (FILE_EXPIRATION as $k => $v): ?>
-                                                    <option value="<?= $k ?>"><?= $v ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </details>
-                        </form>
+                                    <table class="vertical">
+                                        <tr>
+                                            <th>Comment</th>
+                                            <td><textarea name="comment" id="form-comment" placeholder="Empty"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Visibility</th>
+                                            <td>
+                                                <select name="visibility" id="form-visibility">
+                                                    <option value="0">Unlisted</option>
+                                                    <?php if (FILES_LIST_ENABLED): ?>
+                                                        <option value="1">Public</option>
+                                                    <?php endif; ?>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Password <span class="hint"
+                                                    title="Password is used for file deletion">[?]</span></th>
+                                            <td><input type="text" id="form-password" name="password"
+                                                    value="<?= generate_random_chars(FILE_ID_LENGTH * 2, FILE_ID_CHARPOOL) ?>">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>File Expiration</th>
+                                            <td>
+                                                <select name="expires" id="form-expires">
+                                                    <?php foreach (FILE_EXPIRATION as $k => $v): ?>
+                                                        <option value="<?= $k ?>"><?= $v ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </details>
+                            </form>
+                        <?php else: ?>
+                            <p>You need to log in to upload files</p>
+                        <?php endif; ?>
                     </div>
                 </section>
 

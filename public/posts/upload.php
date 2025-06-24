@@ -7,7 +7,11 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
 authorize_user();
 
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
-    exit(json_response(null, 'Method not allowed!', 403));
+    exit(json_response(null, 'Method not allowed!', 405));
+}
+
+if (FILE_AUTHORIZED_UPLOAD && !isset($_SESSION['user'])) {
+    exit(json_response(null, 'You must be authorized to upload files', 401));
 }
 
 if (!isset($_FILES['file'])) {
