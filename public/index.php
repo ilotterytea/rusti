@@ -96,9 +96,11 @@ $file_overall_size = $file_stats[1];
                                             <th>Visibility</th>
                                             <td>
                                                 <select name="visibility" id="form-visibility">
-                                                    <option value="0">Unlisted</option>
+                                                    <option value="0" <?= FILE_DEFAULT_VISIBILITY == 0 ? 'selected' : '' ?>>
+                                                        Unlisted</option>
                                                     <?php if (FILES_LIST_ENABLED): ?>
-                                                        <option value="1">Public</option>
+                                                        <option value="1" <?= FILE_DEFAULT_VISIBILITY == 1 ? 'selected' : '' ?>>
+                                                            Public</option>
                                                     <?php endif; ?>
                                                 </select>
                                             </td>
@@ -115,7 +117,7 @@ $file_overall_size = $file_stats[1];
                                             <td>
                                                 <select name="expires" id="form-expires">
                                                     <?php foreach (FILE_EXPIRATION as $k => $v): ?>
-                                                        <option value="<?= $k ?>"><?= $v ?></option>
+                                                        <option value="<?= $k ?>" <?= FILE_DEFAULT_EXPIRATION == $k ? 'selected' : '' ?>><?= $v ?></option>
                                                     <?php endforeach; ?>
                                                 </select>
                                             </td>
