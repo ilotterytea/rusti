@@ -3,6 +3,47 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
 
+function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = null): array
+{
+    // retrieving parameters
+    $page = max(intval($_GET['p'] ?? '1'), 1) - 1;
+    $limit = FILES_MAX_ITEMS;
+    $offset = $limit * $page;
+    $sort_by = $_GET['s'] ?? 'recent';
+
+    $sql = "SELECT id, mime, extension FROM posts";
+
+    if ($only_public) {
+        $sql .= " WHERE visibility = 1";
+    }
+
+    $i = 0;
+
+    if ($user_id) {
+        $sql .= ($only_public ? " AND " : " WHERE ") . "uploaded_by = ?";
+        $i++;
+    }
+
+    $sql .= " ORDER BY " . match ($sort_by) {
+        'light' => 'size ASC',
+        'heavy' => 'size DESC',
+        'oldest' => 'uploaded_at ASC',
+        default => 'uploaded_at DESC'
+    };
+
+    $sql .= " LIMIT ? OFFSET ?";
+
+    $stmt = $db->prepare($sql);
+    if ($user_id) {
+        $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+    }
+    $stmt->bindParam($i + 1, $limit, PDO::PARAM_INT);
+    $stmt->bindParam($i + 2, $offset, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 authorize_user();
 $is_admin = isset($_SESSION['user']) && $_SESSION['user']['is_admin'];
 
@@ -10,6 +51,7 @@ $db = new PDO(DB_URL);
 
 $posts = null;
 $post = null;
+$user = null;
 
 $file_name = null;
 
@@ -31,35 +73,21 @@ if (isset($_GET['id'])) {
         $file_name = "/{$post['id']}.{$post['extension']}";
     }
 }
+// user files
+else if (isset($_GET['by'])) {
+    $stmt = $db->prepare("SELECT id, username FROM users WHERE id = ?");
+    $stmt->execute([$_GET['by']]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user) {
+        $user['is_same_user'] = isset($_SESSION['user']) ? ($user['id'] == $_SESSION['user']['id']) : false;
+
+        $posts = get_all_files($db, !($user['is_same_user'] || $is_admin), $user['id']);
+    }
+}
 // all files
 else if (FILES_LIST_ENABLED || $is_admin) {
-    // retrieving parameters
-    $page = max(intval($_GET['p'] ?? '1'), 1) - 1;
-    $limit = FILES_MAX_ITEMS;
-    $offset = $limit * $page;
-    $sort_by = $_GET['s'] ?? 'recent';
-
-    $sql = "SELECT id, mime, extension FROM posts";
-
-    if (!$is_admin) {
-        $sql .= " WHERE visibility = 1";
-    }
-
-    $sql .= " ORDER BY " . match ($sort_by) {
-        'light' => 'size ASC',
-        'heavy' => 'size DESC',
-        'oldest' => 'uploaded_at ASC',
-        default => 'uploaded_at DESC'
-    };
-
-    $sql .= " LIMIT ? OFFSET ?";
-
-    $stmt = $db->prepare($sql);
-    $stmt->bindParam(1, $limit, PDO::PARAM_INT);
-    $stmt->bindParam(2, $offset, PDO::PARAM_INT);
-    $stmt->execute();
-
-    $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $posts = get_all_files($db, !$is_admin);
 }
 
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
@@ -189,11 +217,16 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                 <?php elseif (isset($posts)): ?>
                     <section class="brand">
                         <a href="/"><img src="/static/img/brand.webp" alt="<?= INSTANCE_NAME ?>"></a>
-                        <h1>Public catalog of <?= INSTANCE_NAME ?></h1>
-                        <?php if ($is_admin): ?>
-                            <p>Here are <u>all</u> files... you need to worry about it.</p>
+                        <?php if (isset($user)): ?>
+                            <h1>File catalog of <?= $user['username'] ?></h1>
                         <?php else: ?>
-                            <p>Here are only files with <u>public</u> visibility, don&apos;t worry.</p>
+                            <h1>File catalog of <?= INSTANCE_NAME ?></h1>
+                        <?php endif; ?>
+
+                        <?php if ((isset($user['is_same_user']) && $user['is_same_user']) || $is_admin): ?>
+                            <p>Showing <u>all</u> <?= count($posts) ?> posts</p>
+                        <?php else: ?>
+                            <p>Showing <?= count($posts) ?> <u>public</u> posts</p>
                         <?php endif; ?>
                     </section>
                     <section class="files row flex-wrap gap-8">
@@ -209,8 +242,10 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                             </div>
                         <?php endforeach; ?>
                     </section>
-                <?php else: ?>
+                <?php elseif (!FILES_LIST_ENABLED): ?>
                     Public file catalog is disabled on this instance.
+                <?php else: ?>
+                    Nothing found.
                 <?php endif; ?>
             </main>
         </div>
