@@ -72,6 +72,11 @@ if (isset($_GET['id'])) {
         }
 
         $file_name = "/{$post['id']}.{$post['extension']}";
+
+        // fetching ban
+        $stmt = $db->prepare("SELECT * FROM post_bans WHERE post_id = ?");
+        $stmt->execute([$post['id']]);
+        $post['ban'] = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 }
 // user files
@@ -130,38 +135,59 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                     <?php html_alert() ?>
 
                     <!-- File preview -->
-                    <section class="file-preview box column justify-center align-center">
-                        <?php if (str_starts_with($post['mime'], 'image/')): ?>
-                            <img src="/userdata<?= $file_name ?>" alt="An image.">
-                        <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
-                            <video autoplay controls>
-                                <source src="/userdata<?= $file_name ?>" type="<?= $post['mime'] ?>">
-                            </video>
-                        <?php elseif (str_starts_with($post['mime'], 'audio/')): ?>
-                            <audio autoplay controls>
-                                <source src="/userdata<?= $file_name ?>" type="<?= $post['mime'] ?>">
-                            </audio>
-                        <?php elseif (str_starts_with($post['mime'], 'text/')): ?>
-                            <pre><?= file_get_contents(FILE_UPLOAD_DIRECTORY . $file_name) ?></pre>
-                        <?php else: ?>
-                            <p><i>No preview</i></p>
-                        <?php endif; ?>
-                    </section>
+                    <?php if (isset($post['ban'])): ?>
+                        <div class="box column red">
+                            <p><b>This post has been banned
+                                    <?= format_timestamp(time() - strtotime($post['ban']['banned_at'])) ?> ago</b>
+                            </p>
+                            <?php if (isset($post['ban']['reason'])): ?>
+                                <p>Reason: <u><?= $post['ban']['reason'] ?></u></p>
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <section class="file-preview box column justify-center align-center">
+                            <?php if (str_starts_with($post['mime'], 'image/')): ?>
+                                <img src="/userdata<?= $file_name ?>" alt="An image.">
+                            <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
+                                <video autoplay controls>
+                                    <source src="/userdata<?= $file_name ?>" type="<?= $post['mime'] ?>">
+                                </video>
+                            <?php elseif (str_starts_with($post['mime'], 'audio/')): ?>
+                                <audio autoplay controls>
+                                    <source src="/userdata<?= $file_name ?>" type="<?= $post['mime'] ?>">
+                                </audio>
+                            <?php elseif (str_starts_with($post['mime'], 'text/')): ?>
+                                <pre><?= file_get_contents(FILE_UPLOAD_DIRECTORY . $file_name) ?></pre>
+                            <?php else: ?>
+                                <p><i>No preview</i></p>
+                            <?php endif; ?>
+                        </section>
 
-                    <!-- File actions -->
-                    <section class="box row-reverse gap-8" id="file-actions">
-                        <a href="<?= $file_name ?>">
-                            <button>Raw</button>
-                        </a>
-                        <a href="<?= $file_name ?>" download>
-                            <button>Download</button>
-                        </a>
-                        <?php if (isset($_SESSION['user']) && ($_SESSION['user']['is_admin'] || (isset($post['uploaded_by']) && $post['uploaded_by']['id'] == $_SESSION['user']['id']))): ?>
-                            <a href="/posts/delete.php?id=<?= $post['id'] ?>">
-                                <button>Delete</button>
+                        <!-- File actions -->
+                        <section class="box row-reverse gap-8" id="file-actions">
+                            <a href="<?= $file_name ?>">
+                                <button>Raw</button>
                             </a>
-                        <?php endif; ?>
-                    </section>
+                            <a href="<?= $file_name ?>" download>
+                                <button>Download</button>
+                            </a>
+                            <a href="/posts/report.php?id=<?= $post['id'] ?>">
+                                <button>Report</button>
+                            </a>
+                            <?php if ($is_admin && !isset($post['ban'])): ?>
+                                <form action="/posts/ban.php" method="post">
+                                    <input type="text" name="id" value="<?= $post['id'] ?>" style="display: none;">
+                                    <input type="text" name="reason" placeholder="Ban reason">
+                                    <button type="submit">Ban</button>
+                                </form>
+                            <?php endif; ?>
+                            <?php if (isset($_SESSION['user']) && ($_SESSION['user']['is_admin'] || (isset($post['uploaded_by']) && $post['uploaded_by']['id'] == $_SESSION['user']['id']))): ?>
+                                <a href="/posts/delete.php?id=<?= $post['id'] ?>">
+                                    <button>Delete</button>
+                                </a>
+                            <?php endif; ?>
+                        </section>
+                    <?php endif; ?>
 
                     <!-- File info -->
                     <section class="box">
