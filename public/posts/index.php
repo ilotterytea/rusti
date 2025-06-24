@@ -153,6 +153,11 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                         <a href="<?= $file_name ?>" download>
                             <button>Download</button>
                         </a>
+                        <?php if (isset($_SESSION['user']) && ($_SESSION['user']['is_admin'] || (isset($post['uploaded_by']) && $post['uploaded_by']['id'] == $_SESSION['user']['id']))): ?>
+                            <a href="/posts/delete.php?id=<?= $post['id'] ?>">
+                                <button>Delete</button>
+                            </a>
+                        <?php endif; ?>
                     </section>
 
                     <!-- File info -->
@@ -252,7 +257,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
     </div>
 </body>
 
-<?php if (isset($post)): ?>
+<?php if (isset($post) && !isset($_SESSION['user'])): ?>
     <script>
         function get_deletion_button() {
             const storage = localStorage.getItem("uploaded_files");
