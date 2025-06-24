@@ -14,7 +14,7 @@ include_once '../config.php';
 
 // redirect to file
 if (str_starts_with($_SERVER['PHP_SELF'], '/index.php/')) {
-    header('Location: /posts/?id=' . str_safe(substr($_SERVER['PHP_SELF'], 11), null));
+    header('Location: /posts/?id=' . str_safe(substr($_SERVER['PHP_SELF'], 11), null) . (!empty($_SERVER['QUERY_STRING']) ? "&{$_SERVER['QUERY_STRING']}" : ""));
     exit;
 }
 

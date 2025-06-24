@@ -1,6 +1,7 @@
 <?php
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
 
 function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = null): array
@@ -125,6 +126,8 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                         <a href="/"><img src="/static/img/brand.webp" alt="<?= INSTANCE_NAME ?>" height="20px"></a>
                         <h1><?= INSTANCE_NAME ?></h1>
                     </section>
+
+                    <?php html_alert() ?>
 
                     <!-- File preview -->
                     <section class="file-preview box column justify-center align-center">
