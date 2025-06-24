@@ -41,6 +41,10 @@ table.vertical th {
     vertical-align: top;
 }
 
+table.vertical.left th {
+    text-align: left;
+}
+
 textarea {
     width: 256px;
     height: 128px;
@@ -115,6 +119,18 @@ main,
 .box .content {
     background: white;
     padding: 8px;
+}
+
+.red {
+    background: #f8cbc6;
+    border-color: #be7b7b;
+}
+
+span.red {
+    background: none;
+    border-color: none;
+    color: red;
+    font-weight: bold;
 }
 
 .uploaded-files {

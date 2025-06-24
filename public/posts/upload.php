@@ -2,6 +2,9 @@
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/image.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
+
+authorize_user();
 
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     exit(json_response(null, 'Method not allowed!', 403));
@@ -97,8 +100,8 @@ if (isset($_POST['expires']) && array_key_exists($_POST['expires'], FILE_EXPIRAT
 
 // saving in database
 $db = new PDO(DB_URL);
-$db->prepare('INSERT INTO posts (id, mime, extension, size, visibility, comment, password, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    ->execute([$file_id, $file_mime, $file_extension, $file_size, $visibility, $comment, $password, $expires_at]);
+$db->prepare('INSERT INTO posts (id, mime, extension, size, visibility, comment, password, expires_at, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    ->execute([$file_id, $file_mime, $file_extension, $file_size, $visibility, $comment, $password, $expires_at, $_SESSION['user']['id'] ?? null]);
 
 // getting data from database
 $stmt = $db->prepare("SELECT * FROM posts WHERE id = ?");
