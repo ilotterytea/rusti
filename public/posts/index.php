@@ -4,7 +4,7 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
 
-function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = null): array
+function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = null, string|null $tags = null): array
 {
     // retrieving parameters
     $page = max(intval($_GET['p'] ?? '1'), 1) - 1;
@@ -12,34 +12,46 @@ function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = n
     $offset = $limit * $page;
     $sort_by = $_GET['s'] ?? 'recent';
 
-    $sql = "SELECT id, mime, extension FROM posts";
+    $sql = "SELECT p.id, p.mime, p.extension FROM posts p";
+    $i = 0;
+    $where = false;
+    $params = [];
 
-    if ($only_public) {
-        $sql .= " WHERE visibility = 1";
+    if ($tags) {
+        $sql .= " INNER JOIN tags t ON t.name = ?
+            INNER JOIN tag_posts tp ON tp.tag_id = t.id
+            WHERE tp.post_id = p.id";
+        array_push($params, [1, $tags, PDO::PARAM_STR]);
+        $where = true;
+        $i++;
     }
 
-    $i = 0;
+    if ($only_public) {
+        $sql .= ($where ? " AND" : " WHERE") . " p.visibility = 1";
+    }
 
     if ($user_id) {
-        $sql .= ($only_public ? " AND " : " WHERE ") . "uploaded_by = ?";
+        $sql .= ($where ? " AND " : " WHERE ") . "p.uploaded_by = ?";
+        array_push($params, [$i + 1, $user_id, PDO::PARAM_INT]);
         $i++;
     }
 
     $sql .= " ORDER BY " . match ($sort_by) {
-        'light' => 'size ASC',
-        'heavy' => 'size DESC',
-        'oldest' => 'uploaded_at ASC',
-        default => 'uploaded_at DESC'
+        'light' => 'p.size ASC',
+        'heavy' => 'p.size DESC',
+        'oldest' => 'p.uploaded_at ASC',
+        default => 'p.uploaded_at DESC'
     };
 
     $sql .= " LIMIT ? OFFSET ?";
 
+    array_push($params, [$i + 1, $limit, PDO::PARAM_INT]);
+    array_push($params, [$i + 2, $offset, PDO::PARAM_INT]);
+
     $stmt = $db->prepare($sql);
-    if ($user_id) {
-        $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+    foreach ($params as $p) {
+        $stmt->bindParam($p[0], $p[1], $p[2]);
     }
-    $stmt->bindParam($i + 1, $limit, PDO::PARAM_INT);
-    $stmt->bindParam($i + 2, $offset, PDO::PARAM_INT);
     $stmt->execute();
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -53,6 +65,10 @@ $db = new PDO(DB_URL);
 $posts = null;
 $post = null;
 $user = null;
+$tags = str_safe($_GET['q'] ?? '', null);
+if (empty($tags)) {
+    $tags = null;
+}
 
 $file_name = null;
 
@@ -77,6 +93,14 @@ if (isset($_GET['id'])) {
         $stmt = $db->prepare("SELECT * FROM post_bans WHERE post_id = ?");
         $stmt->execute([$post['id']]);
         $post['ban'] = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        // fetching tags
+        $stmt = $db->prepare("SELECT t.name FROM tags t
+            INNER JOIN tag_posts tp ON tp.post_id = ?
+            WHERE t.id = tp.tag_id
+        ");
+        $stmt->execute([$post['id']]);
+        $post['tags'] = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'name');
     }
 }
 // user files
@@ -93,7 +117,7 @@ else if (isset($_GET['by'])) {
 }
 // all files
 else if (FILES_LIST_ENABLED || $is_admin) {
-    $posts = get_all_files($db, !$is_admin);
+    $posts = get_all_files($db, !$is_admin, null, $tags);
 }
 
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
@@ -192,6 +216,16 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                     <!-- File info -->
                     <section class="box">
                         <table class="vertical">
+                            <?php if (!empty($post['tags'])): ?>
+                                <tr>
+                                    <th>Tags</th>
+                                    <td>
+                                        <?php foreach ($post['tags'] as $tag): ?>
+                                            <a href="/posts/?q=<?= $tag ?>"><?= $tag ?></a>
+                                        <?php endforeach; ?>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
                             <tr>
                                 <th>Uploader</th>
                                 <td>
@@ -257,11 +291,17 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                             <h1>File catalog of <?= INSTANCE_NAME ?></h1>
                         <?php endif; ?>
 
-                        <?php if ((isset($user['is_same_user']) && $user['is_same_user']) || $is_admin): ?>
-                            <p>Showing <u>all</u> <?= count($posts) ?> posts</p>
-                        <?php else: ?>
-                            <p>Showing <?= count($posts) ?> <u>public</u> posts</p>
-                        <?php endif; ?>
+                        <p>
+                            <?php if ((isset($user['is_same_user']) && $user['is_same_user']) || $is_admin): ?>
+                                Showing <u>all</u> <?= count($posts) ?> posts
+                            <?php else: ?>
+                                Showing <?= count($posts) ?> <u>public</u> posts
+                            <?php endif; ?>
+
+                            <?php if (isset($tags)): ?>
+                                with tag <u><?= $tags ?></u>
+                            <?php endif; ?>
+                        </p>
                     </section>
                     <section class="files row flex-wrap gap-8">
                         <?php foreach ($posts as $post): ?>

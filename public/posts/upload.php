@@ -117,6 +117,38 @@ $data['urls'] = [
     'download_url' => $download_url
 ];
 
+// parsing tags
+$tags = str_safe($_POST['tags'] ?? '', null);
+
+if (!empty($tags)) {
+    $tags = explode(' ', $tags);
+    $tag_ids = [];
+    $data['tags'] = [];
+
+    foreach ($tags as $tag) {
+        $stmt = $db->prepare("SELECT id FROM tags WHERE name = ?");
+        $stmt->execute([$tag]);
+
+        $tag_id = null;
+
+        if ($row = $stmt->fetch()) {
+            $tag_id = $row['id'];
+        } else {
+            $db->prepare("INSERT INTO tags(name) VALUES (?)")
+                ->execute([$tag]);
+            $tag_id = $db->lastInsertId();
+        }
+
+        array_push($tag_ids, $tag_id);
+        array_push($data['tags'], $tag);
+    }
+
+    foreach ($tag_ids as $tag_id) {
+        $db->prepare("INSERT INTO tag_posts(tag_id, post_id) VALUES (?, ?)")
+            ->execute([$tag_id, $file_id]);
+    }
+}
+
 if (isset($password)) {
     $data['urls']['deletion_url'] = "{$url}/posts/delete.php?id={$file_id}&key={$_POST['password']}";
 }

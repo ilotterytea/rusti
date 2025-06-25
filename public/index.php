@@ -93,6 +93,12 @@ $file_overall_size = $file_stats[1];
                                             </td>
                                         </tr>
                                         <tr>
+                                            <th>Tags</th>
+                                            <td><input type="text" name="tags" id="form-tags"
+                                                    placeholder="Space-separated tags">
+                                            </td>
+                                        </tr>
+                                        <tr>
                                             <th>Visibility</th>
                                             <td>
                                                 <select name="visibility" id="form-visibility">
@@ -245,6 +251,7 @@ $file_overall_size = $file_stats[1];
         form.append("visibility", document.getElementById("form-visibility").value);
         form.append("password", document.getElementById("form-password").value);
         form.append("expires", document.getElementById("form-expires").value);
+        form.append("tags", document.getElementById("form-tags").value);
 
         fetch("/posts/upload.php", {
             "method": "POST",
