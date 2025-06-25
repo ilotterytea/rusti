@@ -101,6 +101,14 @@ if (isset($_GET['id'])) {
         ");
         $stmt->execute([$post['id']]);
         $post['tags'] = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'name');
+
+        // count views
+        if (!in_array($post['id'], $_SESSION['viewed_files'])) {
+            array_push($_SESSION['viewed_files'], $post['id']);
+            $post['views']++;
+            $db->prepare("UPDATE posts SET views = ? WHERE id = ?")
+                ->execute([$post['views'], $post['id']]);
+        }
     }
 }
 // user files
@@ -271,6 +279,10 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                             N/A
                                     <?php endswitch; ?>
                                 </td>
+                            </tr>
+                            <tr>
+                                <th>Views</th>
+                                <td><?= $post['views'] ?></td>
                             </tr>
                             <tr>
                                 <th>Size</th>

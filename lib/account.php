@@ -4,6 +4,9 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
 function authorize_user()
 {
     session_start();
+    if (!isset($_SESSION['viewed_files'])) {
+        $_SESSION['viewed_files'] = [];
+    }
 
     if (!isset($_COOKIE['secret_key']) && !isset($_SERVER['HTTP_AUTHORIZATION'])) {
         return;
@@ -39,8 +42,8 @@ function authorize_user()
     } else {
         setcookie('secret_key', '', time() - 1000, '/');
 
-        session_unset();
-        session_destroy();
+        unset($_SESSION['files']);
+        unset($_SESSION['user']);
     }
 
     $stmt = null;
