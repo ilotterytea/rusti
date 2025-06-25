@@ -3,8 +3,6 @@ include_once '../lib/utils.php';
 include_once '../lib/alert.php';
 include_once '../lib/account.php';
 
-authorize_user();
-
 // creating a new config if it doesn't exist
 if (!file_exists('../config.php')) {
     copy('../config.sample.php', '../config.php');
@@ -29,6 +27,8 @@ $file_stats->execute();
 $file_stats = $file_stats->fetch();
 $file_count = $file_stats[0];
 $file_overall_size = $file_stats[1];
+
+authorize_user();
 ?>
 <html>
 
