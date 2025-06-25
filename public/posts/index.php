@@ -319,8 +319,10 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                         <?php foreach ($posts as $post): ?>
                             <div class="file">
                                 <a href="/<?= $post['id'] ?>" target="_BLANK">
-                                    <?php if (str_starts_with($post['mime'], 'image/') || str_starts_with($post['mime'], 'video/')): ?>
+                                    <?php if (str_starts_with($post['mime'], 'image/')): ?>
                                         <img src="/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>">
+                                    <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
+                                        <img src="/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>">
                                     <?php else: ?>
                                         <p><?= $post['id'] ?></p>
                                     <?php endif; ?>

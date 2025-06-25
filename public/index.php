@@ -315,8 +315,10 @@ authorize_user();
     function buildJsonFile(file, highlight) {
         let htmlPreview = "<p><i>Non-displayable file.</i></p>";
 
-        if (file.mime.startsWith("image/") || file.mime.startsWith("video/")) {
+        if (file.mime.startsWith("image/")) {
             htmlPreview = `<img src="/thumbnails/${file.id}.jpeg" alt="Missing thumbnail" />`;
+        } else if (file.mime.startsWith("video/")) {
+            htmlPreview = `<img src="/thumbnails/${file.id}.gif" alt="Missing thumbnail" />`;
         }
 
         return `

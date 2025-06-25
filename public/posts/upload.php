@@ -46,7 +46,7 @@ if (FILE_EXTSRC && isset($_POST['url'])) {
     $file_data = [
         'size' => $file['size'],
         'mime' => $file['type'],
-        'extension' => mime2ext($file_mime)
+        'extension' => mime2ext($file['type'])
     ];
 }
 
@@ -55,7 +55,7 @@ if (!$file_data) {
     exit;
 }
 
-if (!$file_data['extension']) {
+if (!$file_data['extension'] || !$file_data['mime']) {
     exit(json_response(null, empty($file_data['mime']) ? 'Corrupted file' : "Unsupported MIME type: {$file_data['mime']}", 400));
 }
 
@@ -103,12 +103,45 @@ if (!is_dir(FILE_UPLOAD_DIRECTORY . "/thumbnails") && !mkdir(FILE_UPLOAD_DIRECTO
     exit(json_response(null, 'Failed to create upload directory', 500));
 }
 
+$is_video = str_starts_with($file_data['mime'], 'video/');
+$thumbnail_folder = FILE_UPLOAD_DIRECTORY . "/thumbnails/$file_id";
+
+if ($is_video && !mkdir($thumbnail_folder, 0777, true)) {
+    generate_alert('/', null, 'Failed to create temporary folder for future thumbnail', 500);
+    exit;
+}
+
 if (
-    isset($file_data['mime']) &&
-    (str_starts_with($file_data['mime'], 'video/') || str_starts_with($file_data['mime'], 'image/')) &&
-    $thumbnail_error = generate_image_thumbnail(FILE_UPLOAD_DIRECTORY . "/uploads/{$file_id}.{$file_data['extension']}[0]", FILE_UPLOAD_DIRECTORY . "/thumbnails/{$file_id}.jpeg", 128, 128)
+    (
+        str_starts_with($file_data['mime'], 'image/') &&
+        $thumbnail_error = generate_image_thumbnail(
+            FILE_UPLOAD_DIRECTORY . "/uploads/{$file_id}.{$file_data['extension']}[0]",
+            FILE_UPLOAD_DIRECTORY . "/thumbnails/{$file_id}.jpeg",
+            128,
+            128
+        )
+    ) ||
+    (
+        $is_video &&
+        $thumbnail_error = generate_video_thumbnail(
+            FILE_UPLOAD_DIRECTORY . "/uploads/{$file_id}.{$file_data['extension']}",
+            $thumbnail_folder,
+            FILE_UPLOAD_DIRECTORY . "/thumbnails/{$file_id}.gif",
+            128,
+            128
+        )
+    )
 ) {
     exit(json_response(null, "Failed to create a thumbnail (Error code {$thumbnail_error})", 500));
+}
+
+if (
+    $is_video &&
+    array_map('unlink', array_filter((array) glob("$thumbnail_folder/*")))
+    && !rmdir($thumbnail_folder)
+) {
+    generate_alert('/', null, 'Failed to remove temporary folder for a thumbnail', 500);
+    exit;
 }
 
 $url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]";
