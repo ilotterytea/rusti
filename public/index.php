@@ -167,7 +167,7 @@ authorize_user();
 
 <script>
     // saving account files locally
-    {
+    function synchronizeFiles() {
         const accountFiles = <?= json_encode(isset($_SESSION['files']) ? $_SESSION['files'] : [], JSON_UNESCAPED_SLASHES) ?>;
 
         let storage = localStorage.getItem("uploaded_files");
