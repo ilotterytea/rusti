@@ -6,8 +6,15 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/partials.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/file.php';
 
-function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = null, string|null $tags = null, int $page, int &$max_pages): array
-{
+function get_all_files(
+    PDO &$db,
+    bool $only_public = true,
+    int|null $user_id = null,
+    string|null $tags = null,
+    int $page,
+    int &$max_pages,
+    bool $preview_only = false
+): array {
     // retrieving parameters
     $limit = FILES_MAX_ITEMS;
     $offset = $limit * $page;
@@ -25,6 +32,10 @@ function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = n
         array_push($params, [1, $tags, PDO::PARAM_STR]);
         $where = true;
         $i++;
+    }
+
+    if ($preview_only) {
+        $sql .= ($where ? " AND" : " WHERE") . " p.mime LIKE 'image/%' OR p.mime LIKE 'video/%'";
     }
 
     if ($only_public) {
@@ -129,10 +140,18 @@ $max_pages = 0;
 $grid_mode = ($_GET['m'] ?? 'grid') == 'grid';
 $infinite_mode = ($_GET['wall'] ?? 'finite') == 'infinite';
 $tags = str_safe($_GET['q'] ?? '', null);
+$preview_files = ($_GET['pf'] ?? 'true') == 'true';
 if (empty($tags)) {
     $tags = null;
 }
-$redirect = sprintf('q=%s&p=%s&by=%s&m=%s', $tags, $page + 1, $_GET['by'] ?? '', $_GET['m'] ?? 'grid');
+$redirect = [
+    'q' => $tags,
+    'p' => $page + 1,
+    'by' => $_GET['by'] ?? '',
+    'm' => $_GET['m'] ?? 'grid',
+    'pf' => $preview_files ? 'true' : 'false'
+];
+$redirect = http_build_query($redirect);
 
 $post = null;
 $user = null;
@@ -158,12 +177,12 @@ else if (isset($_GET['by']) && !empty($_GET['by'])) {
     if ($user) {
         $user['is_same_user'] = isset($_SESSION['user']) ? ($user['id'] == $_SESSION['user']['id']) : false;
 
-        $posts = get_all_files($db, !($user['is_same_user'] || $is_admin), $user['id'], $page, $max_pages);
+        $posts = get_all_files($db, !($user['is_same_user'] || $is_admin), $user['id'], $page, $max_pages, $preview_files);
     }
 }
 // all files
 else if (FILES_LIST_ENABLED || $is_admin) {
-    $posts = get_all_files($db, !$is_admin, null, $tags, $page, $max_pages);
+    $posts = get_all_files($db, !$is_admin, null, $tags, $page, $max_pages, $preview_files);
 
     // fetching popular tags
     $stmt = $db->query("SELECT t.name, COUNT(p.id) AS usage FROM tags t
@@ -371,7 +390,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                     );
                     ?>
 
-                    <section class="row gap-8">
+                    <section class="row gap-8" style="max-width: 20%;">
                         <!-- SIDE BAR -->
                         <section class="column gap-8">
                             <!-- SEARCH -->
@@ -440,6 +459,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                         <button>Grid view</button>
                                     </a>
                                 <?php endif; ?>
+
                                 <?php if ($infinite_mode): ?>
                                     <a href="/posts/?<?= "$redirect&wall=finite" ?>">
                                         <button>Finite wall</button>
@@ -447,6 +467,16 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                 <?php else: ?>
                                     <a href="/posts/?<?= "$redirect&wall=infinite" ?>">
                                         <button>Infinite wall</button>
+                                    </a>
+                                <?php endif; ?>
+
+                                <?php if ($preview_files): ?>
+                                    <a href="/posts/?<?= "$redirect&pf=false" ?>">
+                                        <button>All files</button>
+                                    </a>
+                                <?php else: ?>
+                                    <a href="/posts/?<?= "$redirect&pf=true" ?>">
+                                        <button>Files with thumbnails</button>
                                     </a>
                                 <?php endif; ?>
                             </div>
@@ -476,7 +506,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                         </section>
 
                         <!-- FILES -->
-                        <section class="column gap-8">
+                        <section class="column grow gap-8">
                             <?php if ($grid_mode): ?>
                                 <div class="files row flex-wrap gap-8" id="file-list">
                                     <?php foreach ($posts as $post): ?>
