@@ -1,6 +1,46 @@
 <?php
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
 
+function html_big_footer(PDO &$db)
+{
+    $url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]";
+
+    // counting files
+    $file_stats = $db->query("SELECT COUNT(*), SUM(size) FROM posts");
+    $file_stats->execute();
+    $file_stats = $file_stats->fetch();
+    $file_count = $file_stats[0];
+    $file_overall_size = $file_stats[1];
+
+    echo '' ?>
+    <footer>
+        <?php if (array_key_exists($url, INSTANCE_MIRRORS)): ?>
+            <p>You're using a mirror (<?= INSTANCE_MIRRORS[$url] ?>). <a href="<?= INSTANCE_ORIGINAL_WEBSITE ?>">Check out the
+                    original website!</a></p>
+        <?php endif; ?>
+        <?php
+        $mirrors = array_filter(
+            INSTANCE_MIRRORS,
+            fn($k) => $k != $url,
+            ARRAY_FILTER_USE_KEY
+        );
+        if (!empty($mirrors)): ?>
+            <div class="row gap-8 justify-center align-center">
+                <p>Mirrors:</p>
+                <div class="row justify-between">
+                    <?php foreach ($mirrors as $k => $v): ?>
+                        <p><a href="<?= $k ?>"><?= $v ?></a></p>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+        <p>Serving <?= $file_count ?> files and <?= sprintf("%.2f", $file_overall_size / 1024 / 1024) ?>MB of
+            active
+            content</p>
+    </footer>
+    <?php ;
+}
+
 function meta_opengraph($post = null, $title = null)
 {
     $url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]";

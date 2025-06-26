@@ -155,22 +155,7 @@ authorize_user();
                     </div>
                 </section>
             </main>
-            <footer>
-                <?php
-                $mirror = explode(';', $config['instance']['mirror'] ?? '');
-                if (count($mirror) > 1): ?>
-                    <p style="margin-bottom: 12px">You're looking in the mirror for <?= $mirror[1] ?>. <a
-                            href="<?= $mirror[0] ?>">[ Check out the
-                            origin website
-                            ]</a></p>
-                <?php endif; ?>
-                <p>a part of</p>
-                <a href="https://alright.party" target="_blank"><img src="/static/img/alrightparty.png"
-                        alt="alright.party"></a>
-                <p>Serving <?= $file_count ?> files and <?= sprintf("%.2f", $file_overall_size / 1024 / 1024) ?>MB of
-                    active
-                    content</p>
-            </footer>
+            <?php html_big_footer($db) ?>
         </div>
     </div>
 </body>
