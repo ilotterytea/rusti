@@ -21,6 +21,19 @@ if (FILE_AUTHORIZED_UPLOAD && !isset($_SESSION['user'])) {
     exit(json_response(null, 'You must be authorized to upload files', 401));
 }
 
+$tags = str_safe($_POST['tags'] ?? '', null);
+if (!empty($tags) && FILE_AUTHORIZED_TAGS && !isset($_SESSION['user'])) {
+    generate_alert('/', null, 'Tags are for authorized users only', 403);
+    exit;
+}
+
+$visibility = clamp(intval($_POST['visibility'] ?? '0'), 0, 1);
+if ($visibility == 1 && FILE_AUTHORIZED_PUBLIC && !isset($_SESSION['user'])) {
+    generate_alert('/', null, 'Public posts are for authorized users only', 403);
+    exit;
+}
+
+
 $file_data = null;
 
 // using yt-dlp to download external content
@@ -155,7 +168,6 @@ $url = (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]";
 $download_url = "{$url}/{$file_id}";
 
 // setting other metadata
-$visibility = clamp(intval($_POST['visibility'] ?? '0'), 0, 1);
 $comment = str_safe($_POST['comment'] ?? '', null, false);
 if (empty($comment)) {
     $comment = null;
@@ -210,8 +222,6 @@ $data['urls'] = [
 ];
 
 // parsing tags
-$tags = str_safe($_POST['tags'] ?? '', null);
-
 if (!empty($tags)) {
     $tags = explode(' ', $tags);
     $tag_ids = [];

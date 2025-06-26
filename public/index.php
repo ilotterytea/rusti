@@ -73,19 +73,21 @@ authorize_user();
                                         <td><textarea name="comment" id="form-comment" placeholder="Empty"></textarea>
                                         </td>
                                     </tr>
+                                    <?php if (!FILE_AUTHORIZED_TAGS || (FILE_AUTHORIZED_TAGS && isset($_SESSION['user']))): ?>
                                     <tr>
                                         <th>Tags</th>
                                         <td><input type="text" name="tags" id="form-tags"
                                                 placeholder="Space-separated tags">
                                         </td>
                                     </tr>
+                                    <?php endif; ?>
                                     <tr>
                                         <th>Visibility</th>
                                         <td>
                                             <select name="visibility" id="form-visibility">
                                                 <option value="0" <?= FILE_DEFAULT_VISIBILITY == 0 ? 'selected' : '' ?>>
                                                     Unlisted</option>
-                                                <?php if (FILES_LIST_ENABLED): ?>
+                                                <?php if ((!FILE_AUTHORIZED_PUBLIC && FILES_LIST_ENABLED) || (FILE_AUTHORIZED_PUBLIC && isset($_SESSION['user']))): ?>
                                                     <option value="1" <?= FILE_DEFAULT_VISIBILITY == 1 ? 'selected' : '' ?>>
                                                         Public</option>
                                                 <?php endif; ?>
@@ -220,7 +222,9 @@ authorize_user();
         form.append("visibility", document.getElementById("form-visibility").value);
         form.append("password", document.getElementById("form-password").value);
         form.append("expires", document.getElementById("form-expires").value);
+        <?php if (!FILE_AUTHORIZED_TAGS || (FILE_AUTHORIZED_TAGS && isset($_SESSION['user']))): ?>
         form.append("tags", document.getElementById("form-tags").value);
+        <?php endif; ?>
 
         fetch("/posts/upload.php", {
             "method": "POST",

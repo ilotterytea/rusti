@@ -390,9 +390,9 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                     );
                     ?>
 
-                    <section class="row gap-8" style="max-width: 20%;">
+                    <section class="row gap-8">
                         <!-- SIDE BAR -->
-                        <section class="column gap-8">
+                        <section class="column gap-8" style="max-width: 20%;">
                             <!-- SEARCH -->
                             <form action="/posts/" method="get">
                                 <div class="box">
@@ -506,65 +506,63 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                         </section>
 
                         <!-- FILES -->
-                        <section class="column grow gap-8">
-                            <?php if ($grid_mode): ?>
-                                <div class="files row flex-wrap gap-8" id="file-list">
-                                    <?php foreach ($posts as $post): ?>
-                                        <div class="file">
-                                            <a href="/<?= $post['id'] ?>" target="_blank">
-                                                <?php if (str_starts_with($post['mime'], 'image/')): ?>
-                                                    <img src="/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>">
-                                                <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
-                                                    <img src="/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>">
-                                                <?php else: ?>
-                                                    <p><?= $post['id'] ?></p>
-                                                <?php endif; ?>
+                        <?php if ($grid_mode): ?>
+                            <div class="files row grow flex-wrap gap-8" id="file-list">
+                                <?php foreach ($posts as $post): ?>
+                                    <div class="file">
+                                        <a href="/<?= $post['id'] ?>" target="_blank">
+                                            <?php if (str_starts_with($post['mime'], 'image/')): ?>
+                                                <img src="/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>">
+                                            <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
+                                                <img src="/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>">
+                                            <?php else: ?>
+                                                <p><?= $post['id'] ?></p>
+                                            <?php endif; ?>
+                                        </a>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <table class="column grow gap-8" style="text-align:left">
+                                <thead class="row">
+                                    <tr class="row grow gap-8">
+                                        <th class="grow">File name</th>
+                                        <th><a
+                                                href="/posts/?<?= $redirect . '&s=' . ($_GET['s'] ?? 'light') == 'heavy' ? 'light' : 'heavy' ?>">
+                                                Size
                                             </a>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <table class="column grow gap-8" style="text-align:left">
-                                    <thead class="row">
-                                        <tr class="row grow gap-8">
-                                            <th class="grow">File name</th>
-                                            <th><a
-                                                    href="/posts/?<?= $redirect . '&s=' . ($_GET['s'] ?? 'light') == 'heavy' ? 'light' : 'heavy' ?>">
-                                                    Size
+                                        </th>
+                                        <th><a
+                                                href="/posts/?<?= $redirect . '&s=' . ($_GET['s'] ?? 'recent') == 'oldest' ? 'recent' : 'oldest' ?>">
+                                                Uploaded
+                                            </a></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="column gap-8" id="file-list">
+                                    <?php foreach ($posts as $post): ?>
+                                        <tr class="row gap-8 file-row">
+                                            <td class="row gap-8 align-center grow">
+                                                <div style="width:32px;height:32px;">
+                                                    <?php if (str_starts_with($post['mime'], 'image/')): ?>
+                                                        <img src="/userdata/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>"
+                                                            height="32" width="32">
+                                                    <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
+                                                        <img src="/userdata/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>"
+                                                            height="32" width="32">
+                                                    <?php endif; ?>
+                                                </div>
+                                                <a href="/<?= $post['id'] ?>" target="_blank">
+                                                    <?= sprintf("%s.%s", $post['id'], $post['extension']) ?>
                                                 </a>
-                                            </th>
-                                            <th><a
-                                                    href="/posts/?<?= $redirect . '&s=' . ($_GET['s'] ?? 'recent') == 'oldest' ? 'recent' : 'oldest' ?>">
-                                                    Uploaded
-                                                </a></th>
+                                            </td>
+                                            <td><?= sprintf("%.2fMB", $post['size'] / 1024 / 1024) ?></td>
+                                            <td><?= format_timestamp(time() - strtotime($post['uploaded_at'])) ?>
+                                                ago</td>
                                         </tr>
-                                    </thead>
-                                    <tbody class="column gap-8" id="file-list">
-                                        <?php foreach ($posts as $post): ?>
-                                            <tr class="row gap-8 file-row">
-                                                <td class="row gap-8 align-center grow">
-                                                    <div style="width:32px;height:32px;">
-                                                        <?php if (str_starts_with($post['mime'], 'image/')): ?>
-                                                            <img src="/userdata/thumbnails/<?= $post['id'] ?>.jpeg"
-                                                                alt="<?= $post['id'] ?>" height="32" width="32">
-                                                        <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
-                                                            <img src="/userdata/thumbnails/<?= $post['id'] ?>.gif"
-                                                                alt="<?= $post['id'] ?>" height="32" width="32">
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <a href="/<?= $post['id'] ?>" target="_blank">
-                                                        <?= sprintf("%s.%s", $post['id'], $post['extension']) ?>
-                                                    </a>
-                                                </td>
-                                                <td><?= sprintf("%.2fMB", $post['size'] / 1024 / 1024) ?></td>
-                                                <td><?= format_timestamp(time() - strtotime($post['uploaded_at'])) ?>
-                                                    ago</td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            <?php endif; ?>
-                        </section>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
                     </section>
                 <?php elseif (!FILES_LIST_ENABLED): ?>
                     <?php html_header(); ?>
