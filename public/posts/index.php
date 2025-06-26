@@ -360,7 +360,11 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                             </tr>
                             <tr>
                                 <th>Size</th>
-                                <td><?= sprintf("%.2fMB", $post['size'] / 1024 / 1024) ?></td>
+                                <?php if ($post['size'] == 0): ?>
+                                    <td>N/A</td>
+                                <?php else: ?>
+                                    <td><?= sprintf("%.2fMB", $post['size'] / 1024 / 1024) ?></td>
+                                <?php endif; ?>
                             </tr>
                             <tr>
                                 <th>MIME (Extension)</th>
@@ -555,7 +559,11 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                                     <?= sprintf("%s.%s", $post['id'], $post['extension']) ?>
                                                 </a>
                                             </td>
-                                            <td><?= sprintf("%.2fMB", $post['size'] / 1024 / 1024) ?></td>
+                                            <?php if ($post['size'] == 0): ?>
+                                                <td>N/A</td>
+                                            <?php else: ?>
+                                                <td><?= sprintf("%.2fMB", $post['size'] / 1024 / 1024) ?></td>
+                                            <?php endif; ?>
                                             <td><?= format_timestamp(time() - strtotime($post['uploaded_at'])) ?>
                                                 ago</td>
                                         </tr>
@@ -667,6 +675,8 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                     htmlPreview = `<img src="/thumbnails/${file.id}.gif" alt="${file.id}" width="32" height="32" />`;
                                 }
 
+                                const size = file.size == 0 ? "N/A" : ((file.size / 1024 / 1024).toFixed(2) + "MB");
+
                                 images += `
                                 <tr class="row gap-8 file-row">
                                     <td class="row gap-8 align-center grow">
@@ -677,7 +687,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                             ${file.id}.${file.extension}
                                         </a>
                                         </td>
-                                        <td>${(file.size / 1024 / 1024).toFixed(2)}MB</td>
+                                        <td>${size}</td>
                                         <td>${formatTimestamp((Date.now() / 1000) - Date.parse(file.uploaded_at))}
                                         ago</td>
                                 </tr>

@@ -89,7 +89,11 @@ authorize_user();
                                         <h3><?= sprintf("%s.%s", $file['id'], $file['extension']) ?></h3>
                                         <div class="info">
                                             <p><?= $file['mime'] ?></p>
-                                            <p><?= sprintf("%.2fMB", $file['size'] / 1024 / 1024) ?></p>
+                                            <?php if ($file['size'] == 0): ?>
+                                                <p>N/A</p>
+                                            <?php else: ?>
+                                                <p><?= sprintf("%.2fMB", $file['size'] / 1024 / 1024) ?></p>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="row gap-8">
                                             <a href="<?= $file['urls']['download_url'] ?>" target="_BLANK">
@@ -152,6 +156,8 @@ authorize_user();
                     `;
                 }
 
+                const size = file.size == 0 ? : "N/A" : ((file.size / 1024 / 1024).toFixed(2) + "MB");
+
                 elemOutput += `
                     <div class="box uploaded-file">
                         <div class="preview">
@@ -161,7 +167,7 @@ authorize_user();
                             <h3>${file.id}.${file.extension}</h3>
                             <div class="info">
                                 <p>${file.mime}</p>
-                                <p>${(file.size / 1024 / 1024).toFixed(2)}MB</p>
+                                <p>${size}</p>
                             </div>
                             <div class="row gap-8">
                                 <a href="${file.urls.download_url}" target="_BLANK">
