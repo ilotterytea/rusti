@@ -63,6 +63,9 @@ $is_admin = isset($_SESSION['user']) && $_SESSION['user']['is_admin'];
 
 $db = new PDO(DB_URL);
 
+$popular_tags = null;
+$random_post = null;
+
 $posts = null;
 $post = null;
 $user = null;
@@ -127,6 +130,22 @@ else if (isset($_GET['by'])) {
 // all files
 else if (FILES_LIST_ENABLED || $is_admin) {
     $posts = get_all_files($db, !$is_admin, null, $tags);
+
+    // fetching popular tags
+    $stmt = $db->query("SELECT t.name, COUNT(p.id) AS usage FROM tags t
+        INNER JOIN tag_posts tp ON tp.tag_id = t.id
+        INNER JOIN posts p ON p.id = tp.post_id
+        GROUP BY t.name
+        ORDER BY usage DESC
+        LIMIT 10
+    ");
+    $stmt->execute();
+    $popular_tags = $stmt->fetchAll();
+
+    // fetching a random post
+    $stmt = $db->query("SELECT * FROM posts WHERE mime LIKE 'image/%' OR mime LIKE 'video/%' ORDER BY RANDOM() LIMIT 1");
+    $stmt->execute();
+    $random_post = $stmt->fetch() ?: null;
 }
 
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
@@ -309,20 +328,81 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                     );
                     ?>
 
-                    <section class="files row flex-wrap gap-8">
-                        <?php foreach ($posts as $post): ?>
-                            <div class="file">
-                                <a href="/<?= $post['id'] ?>" target="_BLANK">
-                                    <?php if (str_starts_with($post['mime'], 'image/')): ?>
-                                        <img src="/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>">
-                                    <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
-                                        <img src="/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>">
-                                    <?php else: ?>
-                                        <p><?= $post['id'] ?></p>
-                                    <?php endif; ?>
-                                </a>
-                            </div>
-                        <?php endforeach; ?>
+                    <section class="row gap-8">
+                        <!-- SIDE BAR -->
+                        <section class="column gap-8">
+                            <!-- SEARCH -->
+                            <form action="/posts/" method="get">
+                                <div class="box">
+                                    <div class="tab">
+                                        <p>Search</p>
+                                    </div>
+                                    <div class="content column gap-8">
+                                        <input type="text" name="q" value="<?= $tags ?>" required>
+                                        <button type="submit">Find</button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <?php if (!empty($popular_tags)): ?>
+                                <!-- POPULAR TAGS -->
+                                <div class="box">
+                                    <div class="tab">
+                                        <p>Popular tags</p>
+                                    </div>
+                                    <div class="content column gap-8">
+                                        <ul>
+                                            <?php foreach ($popular_tags as $tag): ?>
+                                                <ol>
+                                                    <a
+                                                        href="/posts/?q=<?= $tag[0] ?>"><?= sprintf("%s (%d)", $tag[0], $tag[1]) ?></a>
+                                                </ol>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (isset($random_post)): ?>
+                                <!-- RANDOM POST -->
+                                <div class="box random-post">
+                                    <div class="tab">
+                                        <p>Random post</p>
+                                    </div>
+                                    <div class="content justify-center align-center">
+                                        <a href="/posts/?id=<?= $random_post['id'] ?>&r=<?= $redirect ?>"
+                                            class="column justify-center align-center">
+                                            <?php if (str_starts_with($random_post['mime'], 'image/')): ?>
+                                                <img src="/thumbnails/<?= $random_post['id'] ?>.jpeg"
+                                                    alt="<?= $random_post['id'] ?>">
+                                            <?php elseif (str_starts_with($random_post['mime'], 'video/')): ?>
+                                                <img src="/thumbnails/<?= $random_post['id'] ?>.gif"
+                                                    alt="<?= $random_post['id'] ?>">
+                                            <?php else: ?>
+                                                <p><?= $random_post['id'] ?></p>
+                                            <?php endif; ?>
+                                        </a>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </section>
+
+                        <!-- FILES -->
+                        <section class="files row flex-wrap gap-8">
+                            <?php foreach ($posts as $post): ?>
+                                <div class="file">
+                                    <a href="/<?= $post['id'] ?>" target="_BLANK">
+                                        <?php if (str_starts_with($post['mime'], 'image/')): ?>
+                                            <img src="/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>">
+                                        <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
+                                            <img src="/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>">
+                                        <?php else: ?>
+                                            <p><?= $post['id'] ?></p>
+                                        <?php endif; ?>
+                                    </a>
+                                </div>
+                            <?php endforeach; ?>
+                        </section>
                     </section>
                 <?php elseif (!FILES_LIST_ENABLED): ?>
                     <?php html_header(); ?>
