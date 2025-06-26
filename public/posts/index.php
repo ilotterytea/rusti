@@ -6,15 +6,14 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/partials.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/file.php';
 
-function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = null, string|null $tags = null): array
+function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = null, string|null $tags = null, int $page): array
 {
     // retrieving parameters
-    $page = max(intval($_GET['p'] ?? '1'), 1) - 1;
     $limit = FILES_MAX_ITEMS;
     $offset = $limit * $page;
     $sort_by = $_GET['s'] ?? 'recent';
 
-    $sql = "SELECT p.id, p.mime, p.extension FROM posts p";
+    $sql = "SELECT p.id, p.mime, p.extension, p.uploaded_at, p.size FROM posts p";
     $i = 0;
     $where = false;
     $params = [];
@@ -116,6 +115,9 @@ $popular_tags = null;
 $random_post = null;
 
 $posts = null;
+$page = max(intval($_GET['p'] ?? '1'), 1) - 1;
+$grid_mode = ($_GET['m'] ?? 'grid') == 'grid';
+
 $post = null;
 $user = null;
 $tags = str_safe($_GET['q'] ?? '', null);
@@ -136,7 +138,7 @@ if (isset($_GET['id'])) {
     }
 }
 // user files
-else if (isset($_GET['by'])) {
+else if (isset($_GET['by']) && !empty($_GET['by'])) {
     $stmt = $db->prepare("SELECT id, username FROM users WHERE id = ?");
     $stmt->execute([$_GET['by']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -144,12 +146,12 @@ else if (isset($_GET['by'])) {
     if ($user) {
         $user['is_same_user'] = isset($_SESSION['user']) ? ($user['id'] == $_SESSION['user']['id']) : false;
 
-        $posts = get_all_files($db, !($user['is_same_user'] || $is_admin), $user['id']);
+        $posts = get_all_files($db, !($user['is_same_user'] || $is_admin), $user['id'], $page);
     }
 }
 // all files
 else if (FILES_LIST_ENABLED || $is_admin) {
-    $posts = get_all_files($db, !$is_admin, null, $tags);
+    $posts = get_all_files($db, !$is_admin, null, $tags, $page);
 
     // fetching popular tags
     $stmt = $db->query("SELECT t.name, COUNT(p.id) AS usage FROM tags t
@@ -410,24 +412,81 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                     </div>
                                 </div>
                             <?php endif; ?>
+
+                            <!-- OTHER -->
+                            <div class="box row flex-wrap">
+                                <?php if ($grid_mode): ?>
+                                    <a
+                                        href="/posts/?q=<?= $tags ?>&s=<?= $_GET['s'] ?? '' ?>&m=row&p=<?= $page + 1 ?>&by=<?= $_GET['by'] ?? '' ?>">
+                                        <button>List view</button>
+                                    </a>
+                                <?php else: ?>
+                                    <a
+                                        href="/posts/?q=<?= $tags ?>&s=<?= $_GET['s'] ?? '' ?>&m=grid&p=<?= $page + 1 ?>&by=<?= $_GET['by'] ?? '' ?>">
+                                        <button>Grid view</button>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
                         </section>
 
                         <!-- FILES -->
-                        <section class="files row flex-wrap gap-8">
-                            <?php foreach ($posts as $post): ?>
-                                <div class="file">
-                                    <a href="/<?= $post['id'] ?>" target="_BLANK">
-                                        <?php if (str_starts_with($post['mime'], 'image/')): ?>
-                                            <img src="/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>">
-                                        <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
-                                            <img src="/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>">
-                                        <?php else: ?>
-                                            <p><?= $post['id'] ?></p>
-                                        <?php endif; ?>
-                                    </a>
-                                </div>
-                            <?php endforeach; ?>
-                        </section>
+                        <?php if ($grid_mode): ?>
+                            <section class="files row flex-wrap gap-8" id="file-list">
+                                <?php foreach ($posts as $post): ?>
+                                    <div class="file">
+                                        <a href="/<?= $post['id'] ?>" target="_blank">
+                                            <?php if (str_starts_with($post['mime'], 'image/')): ?>
+                                                <img src="/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>">
+                                            <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
+                                                <img src="/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>">
+                                            <?php else: ?>
+                                                <p><?= $post['id'] ?></p>
+                                            <?php endif; ?>
+                                        </a>
+                                    </div>
+                                <?php endforeach; ?>
+                            </section>
+                        <?php else: ?>
+                            <table class="column grow gap-8" style="text-align:left">
+                                <thead class="row">
+                                    <tr class="row grow gap-8">
+                                        <th class="grow">File name</th>
+                                        <th><a
+                                                href="/posts/?q=<?= $tags ?>&s=<?= ($_GET['s'] ?? 'light') == 'heavy' ? 'light' : 'heavy' ?>&m=row&p=<?= $page + 1 ?>&by=<?= $_GET['by'] ?? '' ?>">
+                                                Size
+                                            </a>
+                                        </th>
+                                        <th><a
+                                                href="/posts/?q=<?= $tags ?>&s=<?= ($_GET['s'] ?? 'recent') == 'oldest' ? 'recent' : 'oldest' ?>&m=row&p=<?= $page + 1 ?>&by=<?= $_GET['by'] ?? '' ?>">
+                                                Uploaded
+                                            </a></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="column gap-8" id="file-list">
+                                    <?php foreach ($posts as $post): ?>
+                                        <tr class="row gap-8 file-row">
+                                            <td class="row gap-8 align-center grow">
+                                                <div style="width:32px;height:32px;">
+                                                    <?php if (str_starts_with($post['mime'], 'image/')): ?>
+                                                        <img src="/userdata/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>"
+                                                            height="32" width="32">
+                                                    <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
+                                                        <img src="/userdata/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>"
+                                                            height="32" width="32">
+                                                    <?php endif; ?>
+                                                </div>
+                                                <a href="/<?= $post['id'] ?>" target="_blank">
+                                                    <?= sprintf("%s.%s", $post['id'], $post['extension']) ?>
+                                                </a>
+                                            </td>
+                                            <td><?= sprintf("%.2fMB", $post['size'] / 1024 / 1024) ?></td>
+                                            <td><?= format_timestamp(time() - strtotime($post['uploaded_at'])) ?>
+                                                ago</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
                     </section>
                 <?php elseif (!FILES_LIST_ENABLED): ?>
                     <?php html_header(); ?>
