@@ -7,6 +7,12 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
 
 authorize_user();
 
+// TODO: move /index.php to here.
+if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+    header('Location: /');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     exit(json_response(null, 'Method not allowed!', 405));
 }
