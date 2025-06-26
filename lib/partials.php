@@ -1,5 +1,91 @@
 <?php
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
+
+function html_header(bool $big = false, string $title = INSTANCE_NAME, string|null $subtitle = null)
+{
+    echo '<noscript title="&gt; still no upload history and fancy upload button">JavaScript deniers <img
+            src="/static/img/icons/chad.png" width="20"></noscript>';
+
+    echo '<header class="';
+    echo $big ? 'column gap-8">' : 'row align-bottom gap-8">';
+
+
+    $links = [
+        '/posts/' => 'Posts',
+        '/account/' => 'Account'
+    ];
+
+    $is_admin = isset($_SESSION['user']) && $_SESSION['user']['is_admin'];
+
+    if ($is_admin) {
+        $links['/reports/'] = 'Reports';
+    }
+
+    if ($big) {
+        echo '' ?>
+        <section class="column justify-center align-center">
+            <a href="/"><img src="/static/img/brand.webp" alt=""></a>
+            <h1><?= $title ?></h1>
+            <?php if (isset($subtitle)): ?>
+                <p title="<?= strip_tags($subtitle) ?>"><?= $subtitle ?></p>
+            <?php endif; ?>
+        </section>
+        <section class="row gap-8 align-center justify-center">
+            <?php foreach ($links as $k => $v): ?>
+                <a href="<?= $k ?>">
+                    <button><?= $v ?></button>
+                </a>
+            <?php endforeach; ?>
+        </section>
+        <?php ;
+    } else {
+        echo '' ?>
+        <section class="row align-bottom gap-8">
+            <a href="/"><img src="/static/img/brand.webp" alt="" height="24"></a>
+            <div class="column">
+                <?php if (isset($subtitle)): ?>
+                    <p class="font-tiny align-bottom" title="<?= strip_tags($subtitle) ?>"><?= $subtitle ?></p>
+                <?php endif; ?>
+                <h1 class="grow align-bottom"><?= $title ?></h1>
+            </div>
+        </section>
+        <section class="row grow align-bottom gap-8">
+            <?php foreach ($links as $k => $v): ?>
+                <a href="<?= $k ?>">
+                    <button><?= $v ?></button>
+                </a>
+            <?php endforeach; ?>
+        </section>
+        <?php ;
+    }
+
+    if (isset($_SESSION['user'])) {
+        echo '' ?>
+        <section class="row <?= $big ? 'justify-center' : '' ?> gap-8">
+            <p>
+                Logged in as
+                <?php if ($_SESSION['user']['is_admin']): ?>
+                    <span class="red">
+                    <?php endif; ?>
+
+                    <?= $_SESSION['user']['username'] ?>
+
+                    <?php if ($_SESSION['user']['is_admin']): ?>
+                    </span>
+                <?php endif; ?>
+            </p>
+            <a href="/account/logout.php">
+                <img src="/static/img/icons/door_out.png" alt="[Logout]">
+            </a>
+        </section>
+        <?php ;
+    }
+
+    echo '</header>';
+
+    html_alert();
+}
 
 function html_big_footer(PDO &$db)
 {

@@ -2,7 +2,7 @@
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
-include_once $_SERVER['DOCUMENT_ROOT'] . '/../partials.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/partials.php';
 
 $db = new PDO(DB_URL);
 
@@ -67,12 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="container">
         <div class="wrapper">
             <main>
-                <section class="row align-center gap-8">
-                    <a href="/"><img src="/static/img/brand.webp" alt="<?= INSTANCE_NAME ?>" height="20px"></a>
-                    <h1><?= INSTANCE_NAME ?></h1>
-                </section>
-
-                <?php html_alert() ?>
+                <?php html_header() ?>
 
                 <form action="/account/register.php" method="post" enctype="multipart/form-data">
                     <h3>Register an account</h3>

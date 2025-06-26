@@ -278,6 +278,10 @@ span.red {
     font-size: 12px;
 }
 
+.font-tiny {
+    font-size: 8px;
+}
+
 .text-gray {
     color: gray;
 }
@@ -286,6 +290,14 @@ span.red {
     justify-content: center;
 }
 
+.justify-between {
+    justify-content: space-between;
+}
+
 .align-center {
     align-items: center;
+}
+
+.align-bottom {
+    align-items: end;
 }

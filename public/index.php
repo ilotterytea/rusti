@@ -45,33 +45,7 @@ authorize_user();
     <div class="container">
         <div class="wrapper">
             <main>
-                <noscript title="&gt; still no upload history and fancy upload button">JavaScript deniers <img
-                        src="/static/img/icons/chad.png" width="20"></noscript>
-
-                <section class="brand">
-                    <img src="/static/img/brand.webp" alt="<?= INSTANCE_NAME ?>">
-                    <h1><?= INSTANCE_NAME ?></h1>
-                    <div class="row gap-8">
-                        <?php if (FILES_LIST_ENABLED || (isset($_SESSION['user']) && $_SESSION['user']['is_admin'])): ?>
-                            <a href="/posts/">[ Catalogue ]</a>
-                        <?php endif; ?>
-                    </div>
-                    <div class="row-gap-8">
-                        <?php if (isset($_SESSION['user'])): ?>
-                            <p>Logged in as <span
-                                    class="<?= $_SESSION['user']['is_admin'] ? "red" : "" ?>"><?= $_SESSION['user']['username'] ?>
-                                </span>
-                                | <a href="/account/logout.php">[ Log out ]</a></p>
-                        <?php else: ?>
-                            <a href="/account/login.php">[ Login ]</a>
-                            <?php if (USER_REGISTRATION): ?>
-                                <a href="/account/register.php">[ Register ]</a>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                    </div>
-                </section>
-
-                <?php html_alert() ?>
+                <?php html_header(true) ?>
 
                 <section class="box file-upload">
                     <div class="tab">

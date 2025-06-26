@@ -161,12 +161,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
         <div class="wrapper">
             <main>
                 <?php if (isset($post)): ?>
-                    <section class="row align-center gap-8">
-                        <a href="/"><img src="/static/img/brand.webp" alt="<?= INSTANCE_NAME ?>" height="20px"></a>
-                        <h1><?= INSTANCE_NAME ?></h1>
-                    </section>
-
-                    <?php html_alert() ?>
+                    <?php html_header() ?>
 
                     <!-- File preview -->
                     <?php if (isset($post['ban'])): ?>
@@ -297,26 +292,23 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                         </table>
                     </section>
                 <?php elseif (isset($posts)): ?>
-                    <section class="brand">
-                        <a href="/"><img src="/static/img/brand.webp" alt="<?= INSTANCE_NAME ?>"></a>
-                        <?php if (isset($user)): ?>
-                            <h1>File catalog of <?= $user['username'] ?></h1>
-                        <?php else: ?>
-                            <h1>File catalog of <?= INSTANCE_NAME ?></h1>
-                        <?php endif; ?>
+                    <?php
+                    if ((isset($user['is_same_user']) && $user['is_same_user']) || $is_admin) {
+                        $subtitle = 'Showing <u>all</u> ' . count($posts) . ' posts';
+                    } else {
+                        $subtitle = 'Showing ' . count($posts) . ' <u>public</u> posts';
+                    }
 
-                        <p>
-                            <?php if ((isset($user['is_same_user']) && $user['is_same_user']) || $is_admin): ?>
-                                Showing <u>all</u> <?= count($posts) ?> posts
-                            <?php else: ?>
-                                Showing <?= count($posts) ?> <u>public</u> posts
-                            <?php endif; ?>
+                    if (isset($tags)) {
+                        $subtitle .= "with tag <u>$tags</u>";
+                    }
 
-                            <?php if (isset($tags)): ?>
-                                with tag <u><?= $tags ?></u>
-                            <?php endif; ?>
-                        </p>
-                    </section>
+                    html_header(
+                        title: "Library of " . INSTANCE_NAME,
+                        subtitle: $subtitle
+                    );
+                    ?>
+
                     <section class="files row flex-wrap gap-8">
                         <?php foreach ($posts as $post): ?>
                             <div class="file">
@@ -333,8 +325,10 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                         <?php endforeach; ?>
                     </section>
                 <?php elseif (!FILES_LIST_ENABLED): ?>
+                    <?php html_header(); ?>
                     Public file catalog is disabled on this instance.
                 <?php else: ?>
+                    <?php html_header(title: "Library of " . INSTANCE_NAME); ?>
                     Nothing found.
                 <?php endif; ?>
             </main>
