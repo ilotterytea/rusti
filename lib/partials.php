@@ -13,6 +13,7 @@ function html_header(bool $big = false, string $title = INSTANCE_NAME, string|nu
 
     $links = [
         '/posts/' => 'Posts',
+        '/posts/upload.php' => 'Upload',
         '/account/' => 'Account'
     ];
 
@@ -20,6 +21,10 @@ function html_header(bool $big = false, string $title = INSTANCE_NAME, string|nu
 
     if ($is_admin) {
         $links['/reports/'] = 'Reports';
+    }
+
+    if (str_starts_with($_SERVER['PHP_SELF'], '/index.php')) {
+        unset($links['/posts/upload.php']);
     }
 
     if ($big) {
