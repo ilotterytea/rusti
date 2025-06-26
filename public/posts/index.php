@@ -125,15 +125,17 @@ $random_post = null;
 $posts = null;
 $page = max(intval($_GET['p'] ?? '1'), 1) - 1;
 $max_pages = 0;
-$grid_mode = ($_GET['m'] ?? 'grid') == 'grid';
-$redirect = sprintf('q=%s&p=%s&by=%s&m=%s', $tags, $page + 1, $_GET['by'] ?? '', $_GET['m'] ?? 'grid');
 
-$post = null;
-$user = null;
+$grid_mode = ($_GET['m'] ?? 'grid') == 'grid';
+$infinite_mode = ($_GET['wall'] ?? 'finite') == 'infinite';
 $tags = str_safe($_GET['q'] ?? '', null);
 if (empty($tags)) {
     $tags = null;
 }
+$redirect = sprintf('q=%s&p=%s&by=%s&m=%s', $tags, $page + 1, $_GET['by'] ?? '', $_GET['m'] ?? 'grid');
+
+$post = null;
+$user = null;
 
 $file_name = null;
 
@@ -428,7 +430,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                             <?php endif; ?>
 
                             <!-- OTHER -->
-                            <div class="box row flex-wrap">
+                            <div class="box row gap-8 flex-wrap">
                                 <?php if ($grid_mode): ?>
                                     <a href="/posts/?<?= "$redirect&m=row" ?>">
                                         <button>List view</button>
@@ -438,28 +440,39 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                         <button>Grid view</button>
                                     </a>
                                 <?php endif; ?>
-                            </div>
-
-                            <!-- PAGINATION -->
-                            <div class="box row" id="pagination">
-                                <?php
-                                $query = [];
-                                parse_str($redirect, $query);
-                                unset($query['p']);
-                                $redirect = http_build_query($query);
-                                ?>
-
-                                <?php if ($page > 0): ?>
-                                    <a href="/posts/?<?= $redirect . '&p=' . $page - 1 ?>">
-                                        <button>Previous page</button>
+                                <?php if ($infinite_mode): ?>
+                                    <a href="/posts/?<?= "$redirect&wall=finite" ?>">
+                                        <button>Finite wall</button>
                                     </a>
-                                <?php endif; ?>
-                                <?php if ($page < $max_pages - 1): ?>
-                                    <a href="/posts/?<?= $redirect . '&p=' . $page + 2 ?>">
-                                        <button>Next page</button>
+                                <?php else: ?>
+                                    <a href="/posts/?<?= "$redirect&wall=infinite" ?>">
+                                        <button>Infinite wall</button>
                                     </a>
                                 <?php endif; ?>
                             </div>
+
+                            <?php if (($_GET['wall'] ?? 'finite') != 'infinite'): ?>
+                                <!-- PAGINATION -->
+                                <div class="box row">
+                                    <?php
+                                    $query = [];
+                                    parse_str($redirect, $query);
+                                    unset($query['p']);
+                                    $redirect = http_build_query($query);
+                                    ?>
+
+                                    <?php if ($page > 0): ?>
+                                        <a href="/posts/?<?= $redirect . '&p=' . $page - 1 ?>">
+                                            <button>Previous page</button>
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if ($page < $max_pages - 1): ?>
+                                        <a href="/posts/?<?= $redirect . '&p=' . $page + 2 ?>">
+                                            <button>Next page</button>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
                         </section>
 
                         <!-- FILES -->
@@ -554,6 +567,101 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
         }
 
         get_deletion_button();
+    </script>
+<?php endif; ?>
+
+<?php if ($infinite_mode): ?>
+    <script>
+        function formatTimestamp(timestampSecs) {
+            const days = Math.floor(timestampSecs / (60 * 60 * 24));
+            const hours = Math.floor((timestampSecs / (60 * 60)) % 24);
+            const minutes = Math.floor((timestampSecs % (60 * 60)) / 60);
+            const seconds = Math.floor(timestampSecs % 60);
+
+            if (days === 0 && hours === 0 && minutes === 0) {
+                return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+            } else if (days === 0 && hours === 0) {
+                return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+            } else if (days === 0) {
+                return `${hours} hour${hours !== 1 ? 's' : ''}`;
+            } else {
+                return `${days} day${days !== 1 ? 's' : ''}`;
+            }
+        }
+
+        let loading = false;
+        let page = <?= $page + 1 ?>;
+        let startTimestamp = <?= time() ?>;
+        const wall = document.getElementById("file-list");
+
+        window.onscroll = () => {
+            console.log("xd");
+            if (wall.getBoundingClientRect().bottom <= window.innerHeight && !loading) {
+                if (!loading) page++;
+                loading = true;
+
+                fetch(`/posts/?p=${page}&st=${startTimestamp}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then((r) => r.json())
+                    .then((json) => {
+                        if (json.status_code != 200) {
+                            return;
+                        }
+
+                        let images = '';
+
+                        for (const file of json.data) {
+                            <?php if ($grid_mode): ?>
+                                let htmlPreview = `<p>${file.id}</p>`;
+
+                                if (file.mime.startsWith('image/')) {
+                                    htmlPreview = `<img src="/thumbnails/${file.id}.jpeg" alt="${file.id}" />`;
+                                } else if (file.mime.startsWith('video/')) {
+                                    htmlPreview = `<img src="/thumbnails/${file.id}.gif" alt="${file.id}" />`;
+                                }
+
+                                images += `
+                                <div class="file">
+                                    <a href="/<?= $post['id'] ?>" target="_blank">
+                                        ${htmlPreview}
+                                    </a>
+                                </div>
+                                `;
+                            <?php else: ?>
+                                let htmlPreview = `<p>${file.id}</p>`;
+
+                                if (file.mime.startsWith('image/')) {
+                                    htmlPreview = `<img src="/thumbnails/${file.id}.jpeg" alt="${file.id}" width="32" height="32" />`;
+                                } else if (file.mime.startsWith('video/')) {
+                                    htmlPreview = `<img src="/thumbnails/${file.id}.gif" alt="${file.id}" width="32" height="32" />`;
+                                }
+
+                                images += `
+                                <tr class="row gap-8 file-row">
+                                    <td class="row gap-8 align-center grow">
+                                        <div style="width:32px;height:32px;">
+                                            ${htmlPreview}
+                                        </div>
+                                        <a href="/${file.id}" target="_blank">
+                                            ${file.id}.${file.extension}
+                                        </a>
+                                        </td>
+                                        <td>${(file.size / 1024 / 1024).toFixed(2)}MB</td>
+                                        <td>${formatTimestamp((Date.now() / 1000) - Date.parse(file.uploaded_at))}
+                                        ago</td>
+                                </tr>
+                                `;
+                            <?php endif; ?>
+                        }
+
+                        wall.innerHTML += images;
+                        loading = false;
+                    });
+            }
+        };
     </script>
 <?php endif; ?>
 

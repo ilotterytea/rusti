@@ -81,6 +81,8 @@ main,
 .wrapper {
     padding-top: 16px;
     padding: 16px;
+
+    max-width: 50%;
 }
 
 .brand {
