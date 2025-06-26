@@ -78,58 +78,66 @@ authorize_user();
                     <div class="content">
                         <?php if (!FILE_AUTHORIZED_UPLOAD || (FILE_AUTHORIZED_UPLOAD && isset($_SESSION['user']))): ?>
                             <form action="/posts/upload.php" method="post" enctype="multipart/form-data"
-                                class="column gap-8">
-                                <div id="form-upload">
-                                    <input type="file" name="file" id="form-file" required>
+                                class="column gap-8 file-upload">
+
+                                <input type="file" name="file" id="form-file">
+
+                                <div class="column" id="form-file-upload" style="display: none;">
+                                </div>
+
+                                <div class="row gap-8" id="form-file-url">
+                                    <p>Or: </p>
+                                    <input type="url" name="url" id="form-url"
+                                        placeholder="Enter video URL (YouTube, Instagram, etc.)" class="grow">
+                                </div>
+
+                                <table class="vertical" id="form-details">
+                                    <tr>
+                                        <th>Comment</th>
+                                        <td><textarea name="comment" id="form-comment" placeholder="Empty"></textarea>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Tags</th>
+                                        <td><input type="text" name="tags" id="form-tags"
+                                                placeholder="Space-separated tags">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Visibility</th>
+                                        <td>
+                                            <select name="visibility" id="form-visibility">
+                                                <option value="0" <?= FILE_DEFAULT_VISIBILITY == 0 ? 'selected' : '' ?>>
+                                                    Unlisted</option>
+                                                <?php if (FILES_LIST_ENABLED): ?>
+                                                    <option value="1" <?= FILE_DEFAULT_VISIBILITY == 1 ? 'selected' : '' ?>>
+                                                        Public</option>
+                                                <?php endif; ?>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Password <span class="hint"
+                                                title="Password is used for file deletion">[?]</span></th>
+                                        <td><input type="text" id="form-password" name="password"
+                                                value="<?= generate_random_chars(FILE_ID_LENGTH * 2, FILE_ID_CHARPOOL) ?>">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>File Expiration</th>
+                                        <td>
+                                            <select name="expires" id="form-expires">
+                                                <?php foreach (FILE_EXPIRATION as $k => $v): ?>
+                                                    <option value="<?= $k ?>" <?= FILE_DEFAULT_EXPIRATION == $k ? 'selected' : '' ?>><?= $v ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <div class="row">
                                     <button type="submit" id="form-submit-button">Upload</button>
                                 </div>
-                                <details>
-                                    <summary>Options <span class="small-font">(set before upload)</span></summary>
-
-                                    <table class="vertical">
-                                        <tr>
-                                            <th>Comment</th>
-                                            <td><textarea name="comment" id="form-comment" placeholder="Empty"></textarea>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>Tags</th>
-                                            <td><input type="text" name="tags" id="form-tags"
-                                                    placeholder="Space-separated tags">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>Visibility</th>
-                                            <td>
-                                                <select name="visibility" id="form-visibility">
-                                                    <option value="0" <?= FILE_DEFAULT_VISIBILITY == 0 ? 'selected' : '' ?>>
-                                                        Unlisted</option>
-                                                    <?php if (FILES_LIST_ENABLED): ?>
-                                                        <option value="1" <?= FILE_DEFAULT_VISIBILITY == 1 ? 'selected' : '' ?>>
-                                                            Public</option>
-                                                    <?php endif; ?>
-                                                </select>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>Password <span class="hint"
-                                                    title="Password is used for file deletion">[?]</span></th>
-                                            <td><input type="text" id="form-password" name="password"
-                                                    value="<?= generate_random_chars(FILE_ID_LENGTH * 2, FILE_ID_CHARPOOL) ?>">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>File Expiration</th>
-                                            <td>
-                                                <select name="expires" id="form-expires">
-                                                    <?php foreach (FILE_EXPIRATION as $k => $v): ?>
-                                                        <option value="<?= $k ?>" <?= FILE_DEFAULT_EXPIRATION == $k ? 'selected' : '' ?>><?= $v ?></option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </details>
                             </form>
                         <?php else: ?>
                             <p>You need to log in to upload files</p>
@@ -212,13 +220,18 @@ authorize_user();
     const uploadedFiles = document.getElementById("uploaded-files");
 
     const formFile = document.getElementById("form-file");
+    const formURLWrapper = document.getElementById("form-file-url");
+    const formURL = document.getElementById("form-url");
+    const formDetails = document.getElementById("form-details");
     const formSubmitButton = document.getElementById("form-submit-button");
 
     // Decorating the form
-    const form = document.getElementById("form-upload");
+    const form = document.getElementById("form-file-upload");
     formSubmitButton.style.display = 'none';
     formFile.style.display = 'none';
-    form.innerHTML += '<div class="form-dropzone" id="form-dropzone"><h1>Click to select or drag & drop file here</h1><p>The upload will start immediately after selection/drop</p></div>';
+    formDetails.style.display = 'none';
+    form.style.display = 'flex';
+    form.innerHTML += '<div class="form-dropzone" id="form-dropzone"><h1>Click to select or drag & drop file here</h1></div>';
 
     const formDropzone = document.getElementById("form-dropzone");
     formDropzone.addEventListener("click", () => formFile.click());
@@ -238,15 +251,41 @@ authorize_user();
         e.preventDefault();
     });
 
-    formFile.addEventListener("change", (e) => uploadForm(e.target.files[0]));
+    formFile.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        formDropzone.innerHTML = `<h1>${file.name}</h1>`;
+        formURLWrapper.style.display = 'none';
+        formDetails.style.display = 'flex';
+        formSubmitButton.style.display = 'flex';
+    });
+
+    formURL.addEventListener("change", (e) => {
+        const d = e.target.value.length > 0 ? 'flex' : 'none';
+        formDetails.style.display = d;
+        formSubmitButton.style.display = d;
+        formDropzone.style.display = e.target.value.length > 0 ? 'none' : 'flex';
+    });
+
+    document.querySelector(".file-upload").addEventListener("submit", (e) => {
+        e.preventDefault();
+        uploadForm(formURL.value.length > 0 ? null : formFile.files[0]);
+    }, true);
 
     function uploadForm(file) {
         lastUrl = null;
         formFile.setAttribute("disabled", true);
-        formDropzone.innerHTML = '<h1>Uploading...</h1>';
+        formDropzone.style.display = 'flex';
+        formDetails.style.display = 'none';
+        formSubmitButton.style.display = 'none';
+        formURLWrapper.style.display = 'none';
+        formDropzone.innerHTML = '<h1>Uploading...</h1>' + (formURL.value.length > 0 ? '<p>This might take a while...</p>' : '');
 
         const form = new FormData();
-        form.append("file", file);
+        if (file) {
+            form.append("file", file);
+        } else {
+            form.append("url", formURL.value);
+        }
         form.append("comment", document.getElementById("form-comment").value);
         form.append("visibility", document.getElementById("form-visibility").value);
         form.append("password", document.getElementById("form-password").value);
@@ -264,6 +303,10 @@ authorize_user();
             .then((json) => {
                 if (json.status_code != 201) {
                     alert(json.message);
+                    formFile.removeAttribute("disabled");
+                    formDropzone.innerHTML = '<h1>Click or drag files here</h1>';
+                    formURLWrapper.style.display = 'flex';
+                    formURL.value = null;
                     return;
                 }
 
@@ -272,13 +315,17 @@ authorize_user();
                 uploadedFiles.innerHTML = buildJsonFile(json.data, true) + uploadedFiles.innerHTML;
                 formFile.removeAttribute("disabled");
 
-                formDropzone.innerHTML = '<h1>Click or drag files here</h1><p>The upload will start immediately after selection/drop</p>';
+                formDropzone.innerHTML = '<h1>Click or drag files here</h1>';
+                formURLWrapper.style.display = 'flex';
+                formURL.value = null;
             })
             .catch((err) => {
                 alert("Something went wrong! More info in the console.");
                 console.error(err);
                 formFile.removeAttribute("disabled");
-                formDropzone.innerHTML = '<h1>Click or drag files here</h1><p>The upload will start immediately after selection/drop</p>';
+                formDropzone.innerHTML = '<h1>Click or drag files here</h1>';
+                formURLWrapper.style.display = 'flex';
+                formURL.value = null;
             });
     }
 
