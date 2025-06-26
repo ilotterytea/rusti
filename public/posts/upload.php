@@ -172,17 +172,26 @@ $expires_at = null;
 
 if (isset($_POST['expires']) && array_key_exists($_POST['expires'], FILE_EXPIRATION)) {
     $e = $_POST['expires'];
-    $v = intval(substr($e, 0, strlen($e) - 1));
-    $m = substr($e, strlen($e) - 1);
+    $format = 'Y-m-d H:i:s';
 
-    $secs = match ($m) {
-        'd' => 86400,
-        'h' => 3600,
-        default => 0
-    };
+    if ($e == 'ne') {
+        $expires_at = null;
+    } else if ($e == 're') {
+        $expires_at = date($format);
+    } else {
+        $v = intval(substr($e, 0, strlen($e) - 1));
+        $m = substr($e, strlen($e) - 1);
 
-    $t = time() + $v * $secs;
-    $expires_at = date("Y-m-d H:i:s", $t);
+        $secs = match ($m) {
+            'd' => 86400,
+            'h' => 3600,
+            'm' => 60,
+            default => 0
+        };
+
+        $t = time() + $v * $secs;
+        $expires_at = date($format, $t);
+    }
 }
 
 // saving in database
@@ -235,6 +244,12 @@ if (!empty($tags)) {
 if (isset($password)) {
     $data['urls']['deletion_url'] = "{$url}/posts/delete.php?id={$file_id}&key={$_POST['password']}";
 }
+
+if (!isset($_SESSION['uploaded_files'])) {
+    $_SESSION['uploaded_files'] = [];
+}
+
+array_push($_SESSION['uploaded_files'], $file_id);
 
 if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
     exit(json_response($data, null, 201));

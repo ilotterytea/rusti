@@ -4,6 +4,7 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/partials.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/file.php';
 
 function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = null, string|null $tags = null): array
 {
@@ -58,6 +59,54 @@ function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = n
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function get_file(PDO &$db, mixed $row): mixed
+{
+
+    // checking expiration
+    if (
+        isset($row['expires_at']) &&
+        (
+            ($row['expires_at'] == $row['uploaded_at'] && $row['views'] != 0) ||
+            ($row['expires_at'] != $row['uploaded_at'] && strtotime($row['expires_at']) - time() <= 0)
+        )
+    ) {
+        delete_file($row['id'], $db);
+        return null;
+    }
+
+    $post = $row;
+    unset($post['password']);
+
+    if (isset($post['uploaded_by'])) {
+        $stmt = $db->prepare("SELECT id, username FROM users WHERE id = ?");
+        $stmt->execute([$post['uploaded_by']]);
+        $post['uploaded_by'] = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // fetching ban
+    $stmt = $db->prepare("SELECT * FROM post_bans WHERE post_id = ?");
+    $stmt->execute([$post['id']]);
+    $post['ban'] = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+    // fetching tags
+    $stmt = $db->prepare("SELECT t.name FROM tags t
+        INNER JOIN tag_posts tp ON tp.post_id = ?
+        WHERE t.id = tp.tag_id
+    ");
+    $stmt->execute([$post['id']]);
+    $post['tags'] = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'name');
+
+    // count views
+    if (!in_array($post['id'], $_SESSION['viewed_files']) && !in_array($post['id'], $_SESSION['uploaded_files'] ?? [])) {
+        array_push($_SESSION['viewed_files'], $post['id']);
+        $post['views']++;
+        $db->prepare("UPDATE posts SET views = ? WHERE id = ?")
+            ->execute([$post['views'], $post['id']]);
+    }
+
+    return $post;
+}
+
 authorize_user();
 $is_admin = isset($_SESSION['user']) && $_SESSION['user']['is_admin'];
 
@@ -82,37 +131,8 @@ if (isset($_GET['id'])) {
     $stmt->execute([$_GET['id']]);
 
     if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $post = $row;
-        unset($post['password']);
-
-        if (isset($post['uploaded_by'])) {
-            $stmt = $db->prepare("SELECT id, username FROM users WHERE id = ?");
-            $stmt->execute([$post['uploaded_by']]);
-            $post['uploaded_by'] = $stmt->fetch(PDO::FETCH_ASSOC);
-        }
-
+        $post = get_file($db, $row);
         $file_name = "/{$post['id']}.{$post['extension']}";
-
-        // fetching ban
-        $stmt = $db->prepare("SELECT * FROM post_bans WHERE post_id = ?");
-        $stmt->execute([$post['id']]);
-        $post['ban'] = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-
-        // fetching tags
-        $stmt = $db->prepare("SELECT t.name FROM tags t
-            INNER JOIN tag_posts tp ON tp.post_id = ?
-            WHERE t.id = tp.tag_id
-        ");
-        $stmt->execute([$post['id']]);
-        $post['tags'] = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'name');
-
-        // count views
-        if (!in_array($post['id'], $_SESSION['viewed_files'])) {
-            array_push($_SESSION['viewed_files'], $post['id']);
-            $post['views']++;
-            $db->prepare("UPDATE posts SET views = ? WHERE id = ?")
-                ->execute([$post['views'], $post['id']]);
-        }
     }
 }
 // user files
@@ -263,10 +283,15 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                             </tr>
                             <?php if (isset($post['expires_at'])): ?>
                                 <tr>
-                                    <th>Expires in</th>
-                                    <td style="color: red">about
-                                        <?= format_timestamp(strtotime($post['expires_at']) - time()) ?>
-                                    </td>
+                                    <?php if ($post['expires_at'] == $post['uploaded_at']): ?>
+                                        <th>Expires</th>
+                                        <td style="color:red;font-weight:bold;">after viewing</td>
+                                    <?php else: ?>
+                                        <th>Expires in</th>
+                                        <td style="color: red">about
+                                            <?= format_timestamp(strtotime($post['expires_at']) - time()) ?>
+                                        </td>
+                                    <?php endif; ?>
                                 </tr>
                             <?php endif; ?>
                             <tr>

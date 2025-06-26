@@ -2,6 +2,7 @@
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/file.php';
 
 authorize_user();
 
@@ -49,7 +50,6 @@ $stmt->execute([$ban_id]);
 $ban = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // deleting the file
-unlink(FILE_UPLOAD_DIRECTORY . "/uploads/{$post['id']}.{$post['extension']}");
-unlink(FILE_UPLOAD_DIRECTORY . "/thumbnails/{$post['id']}.jpeg");
+delete_file($post['id']);
 
 generate_alert("/{$post['id']}", $ban, "Post ID {$post['id']} has been banned");

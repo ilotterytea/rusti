@@ -2,6 +2,7 @@
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/file.php';
 
 authorize_user();
 
@@ -36,11 +37,8 @@ $delete_file =
 ;
 
 if ($delete_file) {
-    unlink(FILE_UPLOAD_DIRECTORY . "/uploads/{$post['id']}.{$post['extension']}");
-    unlink(FILE_UPLOAD_DIRECTORY . "/thumbnails/{$post['id']}.jpeg");
-    $db->prepare("DELETE FROM posts WHERE id = ?")
-        ->execute([$post['id']]);
-    generate_alert("/", ['id' => $post['id']], "Deleted file ID: {$post['id']}", 200);
+    delete_file($post['id'], $db);
+    generate_alert("/{$post['id']}", ['id' => $post['id']], "Deleted file ID: {$post['id']}", 200);
 } else {
     generate_alert("/{$post['id']}", null, "You don't own this file.", 403);
 }
