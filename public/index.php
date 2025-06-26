@@ -121,11 +121,21 @@ authorize_user();
                     </div>
                 </section>
 
-                <section class="box" id="uploaded-files-wrapper" style="display:none">
+                <section class="box">
                     <div class="tab">
-                        <p>Uploaded Files<span title="Stored locally">*</span></p>
+                        <p>Where are all my uploaded files?</p>
                     </div>
-                    <div class="content uploaded-files" id="uploaded-files">
+                    <div class="content">
+                        <p>They&apos;re still saved in your cookies and you can view them in the <a
+                                href="/account/">'Account'</a> tab.</p>
+                    </div>
+                </section>
+
+                <section class="box column" style="display: none;">
+                    <div class="tab">
+                        <p>Recently uploaded files<span title="Stored locally">*</span></p>
+                    </div>
+                    <div class="content uploaded-files" id="recently-uploaded-files">
                     </div>
                 </section>
             </main>
@@ -135,50 +145,9 @@ authorize_user();
 </body>
 
 <script>
-    // saving account files locally
-    function synchronizeFiles() {
-        const accountFiles = <?= json_encode(isset($_SESSION['files']) ? $_SESSION['files'] : [], JSON_UNESCAPED_SLASHES) ?>;
-
-        let storage = localStorage.getItem("uploaded_files");
-        console.log(storage);
-
-
-        if (!storage) {
-            storage = '[]';
-        }
-
-        storage = JSON.parse(storage);
-
-        accountFiles.forEach((v) => {
-            if (!storage.some((x) => x.id == v.id)) {
-                storage.push(v);
-            }
-        });
-
-        console.log(storage);
-        storage = storage.filter((x) => accountFiles.some((y) => x.id == y.id) || x.uploaded_by == null);
-
-        storage.sort((a, b) => {
-            const aDate = new Date(a.uploaded_at);
-            const bDate = new Date(b.uploaded_at);
-
-            if (aDate.getTime() > bDate.getTime()) {
-                return -1;
-            } else if (aDate.getTime() < bDate.getTime()) {
-                return 1;
-            } else {
-                return 0;
-            }
-        });
-
-        console.log(storage);
-
-        localStorage.setItem("uploaded_files", JSON.stringify(storage));
-    }
-
     let lastUrl = null;
 
-    const uploadedFiles = document.getElementById("uploaded-files");
+    const recentlyUploadedFilesElement = document.getElementById("recently-uploaded-files");
 
     const formFile = document.getElementById("form-file");
     const formURLWrapper = document.getElementById("form-file-url");
@@ -272,8 +241,10 @@ authorize_user();
                 }
 
                 addJsonFileToStorage(json.data);
-                document.getElementById("uploaded-files-wrapper").style.display = 'grid';
-                uploadedFiles.innerHTML = buildJsonFile(json.data, true) + uploadedFiles.innerHTML;
+                if (recentlyUploadedFilesElement.parentElement.style.display == 'none') {
+                    recentlyUploadedFilesElement.parentElement.style.display = 'flex';
+                }
+                recentlyUploadedFilesElement.innerHTML = buildJsonFile(json.data, true) + recentlyUploadedFilesElement.innerHTML;
                 formFile.removeAttribute("disabled");
 
                 formDropzone.innerHTML = '<h1>Click or drag files here</h1>';
@@ -303,23 +274,6 @@ authorize_user();
         localStorage.setItem("uploaded_files", JSON.stringify(files));
     }
 
-    function rebuildJsonFileStorage() {
-        if (localStorage.getItem("uploaded_files") == null) {
-            return;
-        }
-
-        document.getElementById("uploaded-files-wrapper").style.display = 'grid';
-
-        const files = JSON.parse(localStorage.getItem("uploaded_files"));
-        let htmlString = "";
-
-        for (const file of files) {
-            htmlString += buildJsonFile(file, false);
-        }
-
-        uploadedFiles.innerHTML = htmlString;
-    }
-
     function buildJsonFile(file, highlight) {
         let htmlPreview = "<p><i>Non-displayable file.</i></p>";
 
@@ -327,6 +281,16 @@ authorize_user();
             htmlPreview = `<img src="/thumbnails/${file.id}.jpeg" alt="Missing thumbnail" />`;
         } else if (file.mime.startsWith("video/")) {
             htmlPreview = `<img src="/thumbnails/${file.id}.gif" alt="Missing thumbnail" />`;
+        }
+
+        let delete_button = '';
+
+        if (file.urls.deletion_url) {
+            delete_button = `
+            <a href="${file.urls.deletion_url}">
+                <button>Delete</button>
+            </a>
+            `;
         }
 
         return `
@@ -340,13 +304,16 @@ authorize_user();
                         <p>${file.mime}</p>
                         <p>${(file.size / 1024 / 1024).toFixed(2)}MB</p>
                     </div>
-                    <a href="${file.urls.download_url}" target="_BLANK">[ Open ]</a>
+                    <div class="row gap-8">
+                        <a href="${file.urls.download_url}" target="_BLANK">
+                            <button>Open</button>
+                        </a>
+                        ${delete_button}
+                    </div>
                 </div>
             </div>
             `;
     }
-
-    rebuildJsonFileStorage();
 </script>
 
 </html>

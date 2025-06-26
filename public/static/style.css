@@ -12,6 +12,11 @@
     font-family: Arial, Helvetica, sans-serif;
 }
 
+hr {
+    margin: 8px 0;
+    border: 1px solid var(--border);
+}
+
 noscript {
     background: black;
     color: white;
