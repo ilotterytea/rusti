@@ -2,6 +2,7 @@
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../partials.php';
 
 $db = new PDO(DB_URL);
 
@@ -36,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href="/static/style.css">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <?php meta_opengraph(title: "Login") ?>
 </head>
 
 <body>

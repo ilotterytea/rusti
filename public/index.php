@@ -2,6 +2,7 @@
 include_once '../lib/utils.php';
 include_once '../lib/alert.php';
 include_once '../lib/account.php';
+include_once '../lib/partials.php';
 
 // creating a new config if it doesn't exist
 if (!file_exists('../config.php')) {
@@ -37,6 +38,7 @@ authorize_user();
     <link rel="stylesheet" href="/static/style.css">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <?php meta_opengraph() ?>
 </head>
 
 <body>

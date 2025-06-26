@@ -3,6 +3,7 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../config.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/partials.php';
 
 function get_all_files(PDO &$db, bool $only_public = true, int|null $user_id = null, string|null $tags = null): array
 {
@@ -152,6 +153,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
     <link rel="stylesheet" href="/static/style.css">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <?php meta_opengraph($post, isset($posts) ? 'Posts' : null) ?>
 </head>
 
 <body>

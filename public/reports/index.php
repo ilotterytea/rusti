@@ -4,6 +4,7 @@ include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/utils.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/image.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/account.php';
 include_once $_SERVER['DOCUMENT_ROOT'] . '/../lib/alert.php';
+include_once $_SERVER['DOCUMENT_ROOT'] . '/../partials.php';
 
 authorize_user();
 
@@ -26,6 +27,7 @@ $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="/static/style.css">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <?php meta_opengraph(title: 'Reports') ?>
 </head>
 
 <body>
