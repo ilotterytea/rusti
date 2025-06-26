@@ -18,7 +18,7 @@ if (FILE_AUTHORIZED_UPLOAD && !isset($_SESSION['user'])) {
 $file_data = null;
 
 // using yt-dlp to download external content
-if (FILE_EXTSRC && isset($_POST['url'])) {
+if (FILE_EXTSRC && isset($_POST['url']) && !empty($_POST['url'])) {
     $url = $_POST['url'];
     $output = [];
     exec('yt-dlp -f "worst" --get-filename -o "%(filesize_approx)s %(ext)s %(duration)s" "' . escapeshellarg($url) . '"', $output);
