@@ -487,7 +487,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                 <?php endif; ?>
                             </div>
 
-                            <?php if (($_GET['wall'] ?? 'finite') != 'infinite'): ?>
+                            <?php if (($_GET['wall'] ?? 'finite') != 'infinite' && $max_pages > 1): ?>
                                 <!-- PAGINATION -->
                                 <div class="box row">
                                     <?php
