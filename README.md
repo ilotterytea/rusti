@@ -1,37 +1,30 @@
 # ![](/icon.png) tinyi
 
-A tiny file hosting service.
+A tiny file hosting service that somehow now consists of booru features.
 
 Features:
 
 + Non-JavaScript frontend option.
 + Upload history.
-+ No database.
++ Tags.
++ Download from external sources (`yt-dlp` required).
++ Static/animated thumbnails.
++ File Catalog
++ Accounts
 
 ## Prerequisites
 
 + PHP >= 8.4
++ `yt-dlp` (for downloading from external sources)
++ `ffmpeg` (for animated thumbnails)
 
 ## Installation guide
 
-1. Setup `tinyi.ini` in the root directory.
-
-Example:
-
-```ini
-[instance]
-mirror = "https://mirror.website.com;Mirror name" ; Optional.
-
-[files]
-upload_directory = "./userdata" ; Required.
-upload_prefix = "xd" ; Optional.
-file_id_length = "5" ; Optional.
-file_id_char_pool = "ABCDEFabcdef0123456789" ; Optional.
-```
-
-4. Use reverse proxy *(Nginx, Apache, etc.)* for the project. See [configuration examples](#reverse-proxy-configurations).
-5. ???
-6. Profit! It should work.
+1. Clone the Git repository.
+2. Use a reverse proxy *(Nginx, Apache, etc.)* for the project. See [configuration examples](#reverse-proxy-configurations).
+3. Copy the `/config.sample.php` file to `/config.php`, or open `/index.php` to copy it automatically. In this file, you can customize your instance.
+4. ???
+5. Profit! Now everything should be working.
 
 ### Reverse proxy configurations
 
@@ -58,8 +51,13 @@ server {
             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     }
 
+    location ~ /thumbnails/^/[^/]+\.[a-zA-Z0-9]+$ {
+            root /var/www/tinyiinstance/thumbnails;
+            try_files $uri =404;
+    }
+
     location ~ ^/[^/]+\.[a-zA-Z0-9]+$ {
-            root /var/www/tinyiinstance;
+            root /var/www/tinyiinstance/uploads;
             try_files $uri =404;
     }
 
