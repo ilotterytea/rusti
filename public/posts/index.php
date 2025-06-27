@@ -268,6 +268,7 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
 
                         <!-- File actions -->
                         <section class="box row-reverse gap-8" id="file-actions">
+                            <button onclick="copy_link()">URL</button>
                             <a href="<?= $file_name ?>">
                                 <button>Raw</button>
                             </a>
@@ -585,6 +586,15 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
         </div>
     </div>
 </body>
+
+<?php if (isset($post)): ?>
+    <script>
+        function copy_link() {
+            navigator.clipboard.writeText("<?= INSTANCE_ORIGINAL_WEBSITE . "/{$post['id']}" ?>");
+            alert("Copied to clipboard!");
+        }
+    </script>
+<?php endif; ?>
 
 <?php if (isset($post) && !isset($_SESSION['user'])): ?>
     <script>

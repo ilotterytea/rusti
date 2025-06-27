@@ -2,7 +2,7 @@
 // INSTANCE
 define("INSTANCE_NAME", $_SERVER['HTTP_HOST']); // Instance name.
 define("INSTANCE_MIRRORS", []); // Instance mirrors. Array should be like [ 'url' => 'name' ].
-define("INSTANCE_ORIGINAL_WEBSITE", $_SERVER['HTTP_HOST']); // The original URL of the instance.
+define("INSTANCE_ORIGINAL_WEBSITE", (empty($_SERVER['HTTPS']) ? 'http' : 'https') . "://$_SERVER[HTTP_HOST]"); // The original URL of the instance.
 
 // DATABASE
 define("DB_URL", "sqlite:{$_SERVER['DOCUMENT_ROOT']}/../database.db"); // The path to the database.
