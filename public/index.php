@@ -61,11 +61,20 @@ authorize_user();
                                 <div class="column" id="form-file-upload" style="display: none;">
                                 </div>
 
-                                <div class="row gap-8" id="form-file-url">
-                                    <p>Or: </p>
-                                    <input type="url" name="url" id="form-url"
-                                        placeholder="Enter video URL (YouTube, Instagram, etc.)" class="grow">
-                                </div>
+                                <?php if (FILE_EXTSRC): ?>
+                                    <div class="row gap-8" id="form-file-url">
+                                        <p>Or: </p>
+                                        <div class="column grow">
+                                            <input type="url" name="url" id="form-url"
+                                                placeholder="Enter video URL (YouTube, Instagram, etc.)" class="grow">
+                                            <div class="row gap-8 font-tiny">
+                                                <p><a href="https://github.com/yt-dlp/yt-dlp/blob/06c1a8cdffe14050206683253726875144192ef5/supportedsites.md"
+                                                        target="_BLANK">Supported sites</a></p>
+                                                <p>Max duration: <b><?= FILE_EXTSRC_DURATION / 60 ?> minutes</b></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
 
                                 <table class="vertical" id="form-details">
                                     <tr>
@@ -152,8 +161,10 @@ authorize_user();
     const recentlyUploadedFilesElement = document.getElementById("recently-uploaded-files");
 
     const formFile = document.getElementById("form-file");
-    const formURLWrapper = document.getElementById("form-file-url");
-    const formURL = document.getElementById("form-url");
+    <?php if (FILE_EXTSRC): ?>
+        const formURLWrapper = document.getElementById("form-file-url");
+        const formURL = document.getElementById("form-url");
+    <?php endif; ?>
     const formDetails = document.getElementById("form-details");
     const formSubmitButton = document.getElementById("form-submit-button");
 
@@ -186,21 +197,29 @@ authorize_user();
     formFile.addEventListener("change", (e) => {
         const file = e.target.files[0];
         formDropzone.innerHTML = `<h1>${file.name}</h1>`;
-        formURLWrapper.style.display = 'none';
+        <?php if (FILE_EXTSRC): ?>
+            formURLWrapper.style.display = 'none';
+        <?php endif; ?>
         formDetails.style.display = 'flex';
         formSubmitButton.style.display = 'flex';
     });
 
-    formURL.addEventListener("change", (e) => {
-        const d = e.target.value.length > 0 ? 'flex' : 'none';
-        formDetails.style.display = d;
-        formSubmitButton.style.display = d;
-        formDropzone.style.display = e.target.value.length > 0 ? 'none' : 'flex';
-    });
+    <?php if (FILE_EXTSRC): ?>
+        formURL.addEventListener("change", (e) => {
+            const d = e.target.value.length > 0 ? 'flex' : 'none';
+            formDetails.style.display = d;
+            formSubmitButton.style.display = d;
+            formDropzone.style.display = e.target.value.length > 0 ? 'none' : 'flex';
+        });
+    <?php endif; ?>
 
     document.querySelector(".file-upload").addEventListener("submit", (e) => {
         e.preventDefault();
-        uploadForm(formURL.value.length > 0 ? null : formFile.files[0]);
+        <?php if (FILE_EXTSRC): ?>
+            uploadForm(formURL.value.length > 0 ? null : formFile.files[0]);
+        <?php else: ?>
+            uploadForm(formFile.files[0]);
+        <?php endif; ?>
     }, true);
 
     function uploadForm(file) {
@@ -209,15 +228,23 @@ authorize_user();
         formDropzone.style.display = 'flex';
         formDetails.style.display = 'none';
         formSubmitButton.style.display = 'none';
-        formURLWrapper.style.display = 'none';
-        formDropzone.innerHTML = '<h1>Uploading...</h1>' + (formURL.value.length > 0 ? '<p>This might take a while...</p>' : '');
+        <?php if (FILE_EXTSRC): ?>
+            formURLWrapper.style.display = 'none';
+            formDropzone.innerHTML = '<h1>Uploading...</h1>' + (formURL.value.length > 0 ? '<p>This might take a while...</p>' : '');
+        <?php else: ?>
+            formDropzone.innerHTML = '<h1>Uploading...</h1>';
+        <?php endif; ?>
 
         const form = new FormData();
-        if (file) {
+        <?php if (FILE_EXTSRC): ?>
+            if (file) {
+                form.append("file", file);
+            } else {
+                form.append("url", formURL.value);
+            }
+        <?php else: ?>
             form.append("file", file);
-        } else {
-            form.append("url", formURL.value);
-        }
+        <?php endif; ?>
         form.append("comment", document.getElementById("form-comment").value);
         form.append("visibility", document.getElementById("form-visibility").value);
         form.append("password", document.getElementById("form-password").value);
@@ -239,8 +266,10 @@ authorize_user();
                     alert(json.message);
                     formFile.removeAttribute("disabled");
                     formDropzone.innerHTML = '<h1>Click or drag files here</h1>';
-                    formURLWrapper.style.display = 'flex';
-                    formURL.value = null;
+                    <?php if (FILE_EXTSRC): ?>
+                        formURLWrapper.style.display = 'flex';
+                        formURL.value = null;
+                    <?php endif; ?>
                     return;
                 }
 
@@ -252,16 +281,20 @@ authorize_user();
                 formFile.removeAttribute("disabled");
 
                 formDropzone.innerHTML = '<h1>Click or drag files here</h1>';
-                formURLWrapper.style.display = 'flex';
-                formURL.value = null;
+                <?php if (FILE_EXTSRC): ?>
+                    formURLWrapper.style.display = 'flex';
+                    formURL.value = null;
+                <?php endif; ?>
             })
             .catch((err) => {
                 alert("Something went wrong! More info in the console.");
                 console.error(err);
                 formFile.removeAttribute("disabled");
                 formDropzone.innerHTML = '<h1>Click or drag files here</h1>';
-                formURLWrapper.style.display = 'flex';
-                formURL.value = null;
+                <?php if (FILE_EXTSRC): ?>
+                    formURLWrapper.style.display = 'flex';
+                    formURL.value = null;
+                <?php endif; ?>
             });
     }
 
