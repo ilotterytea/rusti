@@ -258,7 +258,7 @@ if (!empty($tags)) {
 }
 
 if (isset($password)) {
-    $data['urls']['deletion_url'] = "{$url}/posts/delete.php?id={$file_id}&key={$data['password']}";
+    $data['urls']['deletion_url'] = "{$url}/posts/delete.php?id={$file_id}&password={$data['password']}";
 }
 
 if (!isset($_SESSION['uploaded_files'])) {
