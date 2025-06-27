@@ -36,10 +36,12 @@ function get_all_files(
 
     if ($preview_only) {
         $sql .= ($where ? " AND" : " WHERE") . " p.mime LIKE 'image/%' OR p.mime LIKE 'video/%'";
+        $where = true;
     }
 
     if ($only_public) {
         $sql .= ($where ? " AND" : " WHERE") . " p.visibility = 1";
+        $where = true;
     }
 
     if ($user_id) {
@@ -55,7 +57,7 @@ function get_all_files(
         default => 'p.uploaded_at DESC'
     };
 
-    $countStmt = $db->prepare('SELECT COUNT(*) ' . $sql);
+    $countStmt = $db->prepare("SELECT COUNT(*) $sql");
     foreach ($params as $p) {
         $countStmt->bindParam($p[0], $p[1], $p[2]);
     }
