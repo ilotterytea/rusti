@@ -250,14 +250,14 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                     <?php else: ?>
                         <section class="file-preview box column justify-center align-center">
                             <?php if (str_starts_with($post['mime'], 'image/')): ?>
-                                <img src="/userdata<?= $file_name ?>" alt="An image.">
+                                <img src="<?= $file_name ?>" alt="An image.">
                             <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
                                 <video autoplay controls>
-                                    <source src="/userdata<?= $file_name ?>" type="<?= $post['mime'] ?>">
+                                    <source src="<?= $file_name ?>" type="<?= $post['mime'] ?>">
                                 </video>
                             <?php elseif (str_starts_with($post['mime'], 'audio/')): ?>
                                 <audio autoplay controls>
-                                    <source src="/userdata<?= $file_name ?>" type="<?= $post['mime'] ?>">
+                                    <source src="<?= $file_name ?>" type="<?= $post['mime'] ?>">
                                 </audio>
                             <?php elseif (str_starts_with($post['mime'], 'text/')): ?>
                                 <pre><?= file_get_contents(FILE_UPLOAD_DIRECTORY . $file_name) ?></pre>
@@ -550,10 +550,10 @@ if ($_SERVER['HTTP_ACCEPT'] == 'application/json') {
                                             <td class="row gap-8 align-center grow">
                                                 <div style="width:32px;height:32px;">
                                                     <?php if (str_starts_with($post['mime'], 'image/')): ?>
-                                                        <img src="/userdata/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>"
+                                                        <img src="/thumbnails/<?= $post['id'] ?>.jpeg" alt="<?= $post['id'] ?>"
                                                             height="32" width="32">
                                                     <?php elseif (str_starts_with($post['mime'], 'video/')): ?>
-                                                        <img src="/userdata/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>"
+                                                        <img src="/thumbnails/<?= $post['id'] ?>.gif" alt="<?= $post['id'] ?>"
                                                             height="32" width="32">
                                                     <?php endif; ?>
                                                 </div>
