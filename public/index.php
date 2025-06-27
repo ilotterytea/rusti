@@ -128,7 +128,7 @@ authorize_user();
                         <p>Where are all my uploaded files?</p>
                     </div>
                     <div class="content">
-                        <p>They&apos;re still saved in your cookies and you can view them in the <a
+                        <p>They&apos;re still stored in your cookies and you can retrieve them from the <a
                                 href="/account/">'Account'</a> tab.</p>
                     </div>
                 </section>
