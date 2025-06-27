@@ -173,11 +173,7 @@ if (empty($comment)) {
     $comment = null;
 }
 
-$password = null;
-
-if (isset($_POST['password'])) {
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-}
+$password = $_POST['password'] ?? generate_random_chars(FILE_ID_LENGTH * 3, FILE_ID_CHARPOOL);
 
 // parsing expires_at
 $expires_at = null;
@@ -209,14 +205,24 @@ if (isset($_POST['expires']) && array_key_exists($_POST['expires'], FILE_EXPIRAT
 // saving in database
 $db = new PDO(DB_URL);
 $db->prepare('INSERT INTO posts (id, mime, extension, size, visibility, comment, password, expires_at, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    ->execute([$file_id, $file_data['mime'], $file_data['extension'], $file_data['size'], $visibility, $comment, $password, $expires_at, $_SESSION['user']['id'] ?? null]);
+    ->execute([
+        $file_id,
+        $file_data['mime'],
+        $file_data['extension'],
+        $file_data['size'],
+        $visibility,
+        $comment,
+        password_hash($password, PASSWORD_DEFAULT),
+        $expires_at,
+        $_SESSION['user']['id'] ?? null
+    ]);
 
 // getting data from database
 $stmt = $db->prepare("SELECT * FROM posts WHERE id = ?");
 $stmt->execute([$file_id]);
 
 $data = $stmt->fetch(PDO::FETCH_ASSOC);
-$data['password'] = $_POST['password'];
+$data['password'] = $password;
 $data['urls'] = [
     'download_url' => $download_url
 ];
@@ -252,7 +258,7 @@ if (!empty($tags)) {
 }
 
 if (isset($password)) {
-    $data['urls']['deletion_url'] = "{$url}/posts/delete.php?id={$file_id}&key={$_POST['password']}";
+    $data['urls']['deletion_url'] = "{$url}/posts/delete.php?id={$file_id}&key={$data['password']}";
 }
 
 if (!isset($_SESSION['uploaded_files'])) {
