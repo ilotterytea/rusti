@@ -13,7 +13,7 @@ include_once '../config.php';
 
 // redirect to file
 if (str_starts_with($_SERVER['PHP_SELF'], '/index.php/')) {
-    header('Location: /posts/?id=' . str_safe(substr($_SERVER['PHP_SELF'], 11), null) . (!empty($_SERVER['QUERY_STRING']) ? "&{$_SERVER['QUERY_STRING']}" : ""));
+    header('Location: /posts/?id=' . str_safe(substr($_SERVER['PHP_SELF'], 11, strlen(FILE_ID_PREFIX) + FILE_ID_LENGTH), null));
     exit;
 }
 
@@ -74,12 +74,12 @@ authorize_user();
                                         </td>
                                     </tr>
                                     <?php if (!FILE_AUTHORIZED_TAGS || (FILE_AUTHORIZED_TAGS && isset($_SESSION['user']))): ?>
-                                    <tr>
-                                        <th>Tags</th>
-                                        <td><input type="text" name="tags" id="form-tags"
-                                                placeholder="Space-separated tags">
-                                        </td>
-                                    </tr>
+                                        <tr>
+                                            <th>Tags</th>
+                                            <td><input type="text" name="tags" id="form-tags"
+                                                    placeholder="Space-separated tags">
+                                            </td>
+                                        </tr>
                                     <?php endif; ?>
                                     <tr>
                                         <th>Visibility</th>
@@ -223,7 +223,7 @@ authorize_user();
         form.append("password", document.getElementById("form-password").value);
         form.append("expires", document.getElementById("form-expires").value);
         <?php if (!FILE_AUTHORIZED_TAGS || (FILE_AUTHORIZED_TAGS && isset($_SESSION['user']))): ?>
-        form.append("tags", document.getElementById("form-tags").value);
+            form.append("tags", document.getElementById("form-tags").value);
         <?php endif; ?>
 
         fetch("/posts/upload.php", {
