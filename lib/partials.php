@@ -25,6 +25,7 @@ function html_header(bool $big = false, string $title = INSTANCE_NAME, string|nu
 
     if (str_starts_with($_SERVER['PHP_SELF'], '/index.php')) {
         unset($links['/posts/upload.php']);
+        $links['/uploaders.php'] = 'Uploaders';
     }
 
     if ($big) {

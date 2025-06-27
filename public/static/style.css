@@ -17,6 +17,11 @@ hr {
     border: 1px solid var(--border);
 }
 
+code {
+    padding: 4px;
+    background: var(--box-tab-background);
+}
+
 noscript {
     background: black;
     color: white;
@@ -272,6 +277,10 @@ span.red {
 
 .gap-8 {
     gap: 8px;
+}
+
+.gap-16 {
+    gap: 16px;
 }
 
 .grow {
